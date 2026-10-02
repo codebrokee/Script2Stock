@@ -105,3 +105,28 @@ def rank_scene(
         groups.setdefault(m.provider, []).append(m)
     lists = [(f"provider:{p}", items) for p, items in groups.items()]
     return fuse_and_rerank(narration, concepts or [], lists, session=session, top_n=top_n)
+
+
+def apply_board_diversity(session: Session, script_id: int, target_video_ratio: float | None = None) -> int:
+    """Rescore one script's stored assets for tag diversity + video ratio.
+
+    Called once per generation job (non-fatal). Mutates scores in place and
+    commits; select/reject statuses are untouched.
+    """
+    from sqlmodel import select
+
+    from . import diversity
+    from ..config import settings
+    from ..models import Scene
+
+    ratio = settings.TARGET_VIDEO_RATIO if target_video_ratio is None else target_video_ratio
+    scenes = session.exec(select(Scene).where(Scene.script_id == script_id).order_by(Scene.index)).all()
+    per_scene = [session.exec(select(MediaAsset).where(MediaAsset.scene_id == s.id)).all() for s in scenes]
+    final = diversity.enforce_ratio(diversity.diverse_rank(per_scene), target_video_ratio=ratio)
+    touched = 0
+    for assets in final:
+        for m in assets:
+            session.add(m)
+            touched += 1
+    session.commit()
+    return touched

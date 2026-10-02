@@ -24,6 +24,7 @@ class Settings(BaseSettings):
     EMBEDDING_MODEL: str = "all-MiniLM-L6-v2"
     SEMANTIC_WEIGHT: float = 0.6  # final = (1-w)*keyword + w*semantic
     RRF_K: int = 60  # RRF smoothing constant; top-60 fused items get reranked
+    TARGET_VIDEO_RATIO: float = 0.6  # storyboard diversity: share of videos per scene
 
     @property
     def sqlite_path(self) -> Path:

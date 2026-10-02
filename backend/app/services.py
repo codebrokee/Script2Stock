@@ -249,6 +249,11 @@ async def run_generation_job(job: Job, title: str, text: str) -> None:
                 job.done_scenes += 1
                 job.media_found += len(assets)
                 job.stage = f"Scene {sc.index + 1}/{len(scenes)} done — {len(assets)} assets"
+            try:
+                job.stage = "Balancing storyboard diversity…"
+                matching.apply_board_diversity(session, script.id)
+            except Exception as exc:
+                print(f"board diversity failed (non-fatal): {exc}")
             job.status = "done"
             job.stage = f"Done — {job.done_scenes} scenes, {job.media_found} assets"
         except JobCancelled:

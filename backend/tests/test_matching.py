@@ -209,3 +209,58 @@ def test_fusion_drops_junk_and_merges_dupes() -> None:
     assert "watermark" not in titles and "clipart" not in titles
     urls = [m.download_url.split("?")[0] for m in out]
     assert len(urls) == len(set(urls)), "param-permuted dupes must merge"
+
+
+def _div_item(pid: str, title: str, score: float, media_type: str = "image") -> object:
+    from app.models import MediaAsset
+
+    return MediaAsset(scene_id=0, provider="t", provider_id=pid, title=title,
+                      description="", media_type=media_type, score=score)
+
+
+def test_coarse_tag() -> None:
+    from app.core import diversity
+
+    assert diversity.coarse_tag(_div_item("a", "forest trail trees", 0.0)) == "forest"
+    assert diversity.coarse_tag(_div_item("b", "", 0.0)) == "misc"
+
+
+def test_diverse_rank_spreads_repeats() -> None:
+    from app.core import diversity
+
+    s1 = [_div_item("a", "forest trail", 0.9), _div_item("b", "city night", 0.5)]
+    s2 = [_div_item("c", "forest cabin", 0.9), _div_item("d", "city lights", 0.5)]
+    out = diversity.diverse_rank([s1, s2])
+    assert [m.provider_id for m in out[0]] == ["a", "b"]
+    assert out[0][0].score == 0.9  # first scene unpenalized
+    assert [m.provider_id for m in out[1]][0] == "d"  # forest penalized 1/2
+    assert out[1][1].score == 0.9 * 0.5
+
+
+def test_enforce_ratio_promotes_minority() -> None:
+    from app.core import diversity
+
+    items = [_div_item("i1", "a", 0.9), _div_item("i2", "b", 0.8),
+             _div_item("v1", "c", 0.7, "video"), _div_item("v2", "d", 0.6, "video")]
+    out = diversity.enforce_ratio([items], target_video_ratio=0.5, top_n=2)[0]
+    assert [m.provider_id for m in out] == ["i1", "v1"]
+    items2 = [_div_item("v1", "c", 0.9, "video"), _div_item("v2", "d", 0.8, "video"),
+              _div_item("i1", "a", 0.7)]
+    out2 = diversity.enforce_ratio([items2], target_video_ratio=0.5, top_n=2)[0]
+    assert [m.provider_id for m in out2] == ["v1", "i1"]
+
+
+def test_diversity_never_regresses_golden() -> None:
+    from app.core import diversity
+    from app.core import pipeline
+
+    scenes = E.load_scenes()
+    tops_before: list[str] = []
+    per_scene: list[list] = []
+    for idx, scene in enumerate(scenes):
+        ranked = pipeline.rank_scene(scene["narration"], E.build_candidates(scene, idx), top_n=5)
+        per_scene.append(ranked)
+        tops_before.append(diversity.coarse_tag(ranked[0]))
+    after = diversity.diverse_rank(per_scene)
+    tops_after = [diversity.coarse_tag(s[0]) for s in after]
+    assert E.diversity_score(tops_after) >= E.diversity_score(tops_before)
