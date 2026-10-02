@@ -10,7 +10,8 @@ from __future__ import annotations
 
 from typing import Sequence
 
-from .. import ranker
+from sqlmodel import Session
+
 from ..models import MediaAsset
 
 
@@ -24,7 +25,11 @@ def queries_for_scene(narration: str, max_queries: int = 8) -> list[str]:
 def rank_scene(
     narration: str,
     candidates: Sequence[MediaAsset],
+    concepts: Sequence[str] | None = None,
+    session: Session | None = None,
     top_n: int = 12,
 ) -> list[MediaAsset]:
-    """Ranked candidates for one scene (Layer 2+: semantic blend)."""
-    return ranker.rank_assets(list(candidates), narration, top_n=top_n)
+    """Ranked candidates for one scene (Layer 2: semantic blend, keyword fallback)."""
+    from .rerank import rerank
+
+    return rerank(narration, list(concepts or []), list(candidates), session=session, top_n=top_n)

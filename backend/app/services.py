@@ -7,7 +7,7 @@ from collections.abc import Callable
 import httpx
 from sqlmodel import Session, select
 
-from . import ranker, scene_splitter
+from . import scene_splitter
 from .core import pipeline as matching
 from .cache import cache_get, cache_key, cache_set, fetch_thumbnail
 from .config import settings
@@ -119,7 +119,7 @@ async def populate_media_for_scene(
     ]
     if on_stage:
         on_stage(f"ranking {len(transient)} candidates")
-    ranked = ranker.rank_assets(transient, scene.narration, top_n=12)
+    ranked = matching.rank_scene(scene.narration, transient, concepts=queries, session=session, top_n=12)
     # cache thumbnails to disk (best-effort)
     for i, a in enumerate(ranked):
         if is_cancelled and is_cancelled():
@@ -165,7 +165,7 @@ async def manual_search(session: Session, scene: Scene, q: str, per_page: int = 
         )
         for n in normalized
     ]
-    ranked = ranker.rank_assets(transient, q + " " + scene.narration, top_n=12)
+    ranked = matching.rank_scene(q + " " + scene.narration, transient, concepts=[q], session=session, top_n=12)
     for i, a in enumerate(ranked):
         try:
             a.cached_thumbnail = await fetch_thumbnail(a.thumbnail_url, f"manual_{scene.id}_{i}")

@@ -20,6 +20,9 @@ class Settings(BaseSettings):
     CACHE_TTL_DEFAULT: int = 21600  # 6h
     CACHE_TTL_PIXABAY: int = 86400  # 24h
     THUMBNAIL_DIR: str = str(THUMB_DIR)
+    # matching pipeline tuning
+    EMBEDDING_MODEL: str = "all-MiniLM-L6-v2"
+    SEMANTIC_WEIGHT: float = 0.6  # final = (1-w)*keyword + w*semantic
 
     @property
     def sqlite_path(self) -> Path:

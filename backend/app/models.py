@@ -77,6 +77,28 @@ class ApiCache(SQLModel, table=True):
     ttl_seconds: int = 21600
 
 
+class EmbeddingCache(SQLModel, table=True):
+    """Cached sentence embedding: one row per (model, text). Never re-embed."""
+
+    __tablename__ = "embedding_cache"
+    text_hash: str = SQLField(primary_key=True)
+    text: str = ""
+    vector: bytes = b""  # float32 raw bytes
+    model: str = ""
+    created_at: datetime = SQLField(default_factory=utcnow)
+
+
+class Feedback(SQLModel, table=True):
+    """User select/reject actions used to reweight queries (Layer 6)."""
+
+    id: Optional[int] = SQLField(default=None, primary_key=True)
+    scene_id: int = SQLField(foreign_key="scene.id", index=True)
+    media_id: int = SQLField(foreign_key="mediaasset.id", index=True)
+    action: str = "select"  # select | reject
+    query_used: str = ""
+    created_at: datetime = SQLField(default_factory=utcnow)
+
+
 class StoryboardSave(SQLModel, table=True):
     id: Optional[int] = SQLField(default=None, primary_key=True)
     script_id: int = SQLField(foreign_key="script.id", index=True)

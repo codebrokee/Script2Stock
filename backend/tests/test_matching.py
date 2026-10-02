@@ -52,6 +52,52 @@ def test_query_shapes() -> None:
             assert 2 <= len(q.split()) <= 4, (scene["id"], q)
 
 
+def test_embedding_cache_and_fallback(session, monkeypatch) -> None:
+    import numpy as np
+
+    from app.providers.ai import embeddings
+
+    calls: list[list[str]] = []
+
+    def fake_encode(texts: list[str]) -> object:
+        calls.append(list(texts))
+        return np.ones((len(texts), 4), dtype=np.float32)
+
+    monkeypatch.setattr(embeddings, "encode", fake_encode)
+    v1 = embeddings.cached_encode(session, "hello world")
+    v2 = embeddings.cached_encode(session, "hello world")
+    assert v1 is not None and v2 is not None
+    assert len(calls) == 1, "second identical text must come from SQLite, not the encoder"
+    assert float(abs(v1 - v2).max()) == 0.0
+
+
+def test_blend_falls_back_to_keyword_only(monkeypatch) -> None:
+    from app.core import rerank
+    from app.providers.ai import embeddings
+
+    monkeypatch.setattr(embeddings, "encode", lambda texts: None)
+    items = E.build_candidates(E.load_scenes()[0], 0)
+    out = rerank.rerank("forest trail trees", ["forest"], items, top_n=5)
+    assert len(out) == 5
+    scores = [m.score for m in out]
+    assert scores == sorted(scores, reverse=True)
+    assert all(0.0 <= s <= 1.1 for s in scores)
+
+
+def test_semantic_scores_contract() -> None:
+    from app.providers.ai import embeddings
+
+    scene = E.load_scenes()[2]  # forest hike
+    items = E.build_candidates(scene, 2)
+    if not embeddings.is_available():
+        assert embeddings.semantic_scores(scene["narration"], ["forest"], items) is None
+        return
+    sims = embeddings.semantic_scores(scene["narration"], ["forest"], items)
+    assert sims is not None and len(sims) == len(items)
+    assert all(0.0 <= s <= 1.0 for s in sims)
+    assert sims[0] > sims[3], "relevant item must outscore junk-marked item"
+
+
 def test_concept_expansion_and_entities() -> None:
     from app.core import concept_map, querygen
 

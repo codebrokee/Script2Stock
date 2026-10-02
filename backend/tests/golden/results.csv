@@ -1,3 +1,4 @@
 layer,precision_at_k,hit_rate,forbidden_rate,diversity
 baseline,0.6000,1.0000,0.0000,1.0000
 L1,0.6000,1.0000,0.0000,1.0000
+L2,0.6000,1.0000,0.0000,1.0000
