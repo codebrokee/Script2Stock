@@ -60,7 +60,7 @@ export function ContextRail(props: Props): React.ReactElement {
 
   if (collapsed) {
     return (
-      <div className="flex w-12 flex-col items-center gap-1 rounded-card border bg-surface p-2 shadow-card">
+      <div className="flex w-12 flex-col items-center gap-2 rounded-card border bg-surface p-2 shadow-card">
         <button
           onClick={onToggleCollapse}
           title="Expand panel"
@@ -87,7 +87,7 @@ export function ContextRail(props: Props): React.ReactElement {
 
   return (
     <div className="w-[280px] rounded-card border bg-surface p-4 shadow-card">
-      <div className="mb-3 flex items-center gap-1">
+      <div className="mb-3 flex items-center gap-2">
         {MODES.map((m) => (
           <button
             key={m.id}
@@ -137,7 +137,7 @@ function BoardPane(p: Props): React.ReactElement {
   }
   return (
     <div>
-      <div className="mb-2 flex flex-wrap gap-1">
+      <div className="mb-2 flex flex-wrap gap-2">
         {FILTERS.map((f) => (
           <button
             key={f.id}
@@ -154,7 +154,7 @@ function BoardPane(p: Props): React.ReactElement {
         <input type="checkbox" checked={p.compactAll} onChange={(e) => p.onCompactAll(e.target.checked)} />
         Compact cards
       </label>
-      <ul className="max-h-[50vh] space-y-0.5 overflow-y-auto">
+      <ul className="max-h-[50vh] space-y-2 overflow-y-auto">
         {p.scenes.map((s) => {
           const st = sceneStatus(s);
           const picks = s.media.filter((m) => m.status === 'selected').length;
@@ -209,7 +209,7 @@ function LibraryPane(p: Props): React.ReactElement {
       {items.length === 0 ? (
         <p className="text-xs text-tertiary">Nothing saved yet — use “Save Storyboard” up top.</p>
       ) : (
-        <ul className="max-h-[50vh] space-y-1.5 overflow-y-auto">
+        <ul className="max-h-[50vh] space-y-2 overflow-y-auto">
           {items.map((s) => (
             <li
               key={s.id}

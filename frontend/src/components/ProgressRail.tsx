@@ -167,7 +167,7 @@ export function ProgressRail({
             elapsed
           </p>
           {job.scenes.length > 0 && (
-            <ul className="mt-1.5 space-y-0.5">
+            <ul className="mt-1.5 space-y-2">
               {[...job.scenes]
                 .sort((a, b) => a.index - b.index)
                 .map((s) => (

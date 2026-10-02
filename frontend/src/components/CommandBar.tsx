@@ -24,7 +24,7 @@ export function CommandBar({ view, onView, dirty, canSave, onSave, onExport, onP
       <h1 className="min-w-0 truncate text-lg font-extrabold tracking-tight">
         🎬 Script<span className="text-accent">2</span>Stock
       </h1>
-      <nav className="flex min-w-0 gap-1 overflow-x-auto rounded-card bg-elevated p-1" aria-label="Views">
+      <nav className="flex min-w-0 gap-2 overflow-x-auto rounded-card bg-elevated p-1" aria-label="Views">
         {TABS.map((t) => (
           <button
             key={t.id}

@@ -26,7 +26,7 @@ export function LicensePanel({ asset }: { asset: MediaAsset }): React.ReactEleme
         <LicenseBadge license={asset.license} />
         <span className="prose-safe font-semibold text-primary">{asset.license || 'unknown'}</span>
       </div>
-      <dl className="space-y-1 text-secondary">
+      <dl className="space-y-2 text-secondary">
         <div className="flex gap-2">
           <dt className="w-24 shrink-0 text-tertiary">Creator</dt>
           <dd className="truncate">{asset.creator || '—'}</dd>
@@ -108,7 +108,7 @@ export function Inspector({ asset, sceneIndex, onClose, onUse, onReject, onSimil
             <h3 className="prose-safe text-sm font-bold text-primary">{asset.title || `${asset.provider} ${asset.provider_id}`}</h3>
             {asset.description && <p className="prose-safe mt-1 text-xs leading-relaxed text-secondary">{asset.description}</p>}
           </div>
-          <dl className="grid grid-cols-2 gap-1.5 text-xs [grid-template-columns:repeat(2,minmax(0,1fr))]">
+          <dl className="grid grid-cols-2 gap-1.5 text-xs">
             <div className="rounded-control bg-inset px-2 py-1.5">
               <dt className="text-tertiary">Dimensions</dt>
               <dd className="font-semibold">{asset.width > 0 ? `${asset.width}×${asset.height}` : '—'}</dd>

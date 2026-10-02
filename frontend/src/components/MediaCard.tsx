@@ -76,7 +76,7 @@ export function MediaCard({ asset, onUse, onReject, onSimilar, onUndo, loading, 
           <div aria-hidden className="absolute left-[-10%] right-[-10%] top-1/2 h-0.5 -rotate-6 bg-danger/70" />
         )}
         {/* [overlay] pure-black pills stay readable over any photo */}
-        <div className="absolute bottom-1 left-1 flex gap-1">
+        <div className="absolute bottom-1 left-1 flex gap-2">
           {ratio && (
             <span className="rounded-control bg-black/70 px-1 py-px text-[10px] font-semibold text-primary">{ratio}</span>
           )}
@@ -88,11 +88,11 @@ export function MediaCard({ asset, onUse, onReject, onSimilar, onUndo, loading, 
           )}
         </div>
       </button>
-      <div className="space-y-1 p-2">
+      <div className="space-y-2 p-2">
         <div className="line-clamp-2 text-xs font-medium" title={asset.title}>
           {asset.title || `${asset.provider} ${asset.provider_id}`}
         </div>
-        <div className="flex items-center gap-1 text-[11px] text-secondary">
+        <div className="flex items-center gap-2 text-[11px] text-secondary">
           <span className="min-w-0 flex-1 truncate">{asset.provider}</span>
           <span>·</span>
           <span>{asset.media_type}</span>
@@ -116,7 +116,7 @@ export function MediaCard({ asset, onUse, onReject, onSimilar, onUndo, loading, 
             </button>
           )
         ) : (
-          <div className="flex gap-1 pt-1">
+          <div className="flex gap-2 pt-1">
             <button
               onClick={() => onUse(asset)}
               className="flex-1 rounded-control bg-success px-2 py-1 text-xs font-semibold text-primary hover:brightness-110"

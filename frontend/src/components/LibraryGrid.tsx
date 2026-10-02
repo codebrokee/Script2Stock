@@ -30,7 +30,7 @@ export function LibraryGrid({ saved, previews, onOpen }: Props): React.ReactElem
           <article key={s.id} className="overflow-hidden rounded-card border border-subtle bg-surface shadow-card">
             <button onClick={() => onOpen(s.id)} className="block w-full text-left" title="Preview">
               {thumbs.length > 0 ? (
-                <div className="grid h-24 grid-cols-4 gap-px bg-elevated">
+                <div className="grid h-24 grid-cols-4 gap-2 bg-elevated p-2">
                   {thumbs.map((m) => {
                     const src = m.cached_thumbnail || m.thumbnail_url;
                     return src ? (
