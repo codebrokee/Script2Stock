@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { boardCounts, sceneStatus } from './board';
-import type { MediaAsset, Scene } from '../types';
+import { boardCounts, collectIssues, matchFilter, sceneStatus } from './board';
+import type { MediaAsset, Scene, Storyboard } from '../types';
 
 let nextId = 1;
 
@@ -70,5 +70,38 @@ describe('boardCounts', () => {
       scene(['rejected'])
     ]);
     expect(counts).toEqual({ total: 4, ready: 1, needPicks: 1, pending: 1, errors: 1, rejected: 1 });
+  });
+});
+
+describe('matchFilter', () => {
+  it('matches by derived state', () => {
+    const done = scene(['selected']);
+    expect(matchFilter(done, 'all')).toBe(true);
+    expect(matchFilter(done, 'done')).toBe(true);
+    expect(matchFilter(done, 'needs-pick')).toBe(false);
+    expect(matchFilter(scene(['candidate', 'rejected']), 'rejected')).toBe(true);
+    expect(matchFilter(scene(['candidate']), 'rejected')).toBe(false);
+  });
+});
+
+describe('collectIssues', () => {
+  it('flags missing providers, failed jobs, and troubled scenes', () => {
+    const issues = collectIssues(
+      { scenes: [scene([]), scene(['rejected'])] } as Storyboard,
+      [
+        { name: 'pexels', configured: false },
+        { name: 'wikimedia', configured: true }
+      ],
+      { status: 'error', error: 'boom' }
+    );
+    const texts = issues.map((i) => i.text);
+    expect(texts.some((t) => t.includes('pexels'))).toBe(true);
+    expect(texts.some((t) => t.includes('boom'))).toBe(true);
+    expect(texts.some((t) => t.includes('Scene 1 has no media'))).toBe(true);
+    expect(texts.some((t) => t.includes('all candidates rejected'))).toBe(true);
+  });
+
+  it('is empty for a clean board', () => {
+    expect(collectIssues(null, [{ name: 'wikimedia', configured: true }], null)).toEqual([]);
   });
 });

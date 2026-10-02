@@ -13,9 +13,13 @@ import {
   searchScene,
   setMediaStatus
 } from './api';
-import { JobProgressCard } from './components/JobProgress';
+import { IssuesDrawer } from './components/IssuesDrawer';
+import { ProgressRail } from './components/ProgressRail';
 import { SceneCard } from './components/SceneCard';
+import { StatusBar } from './components/StatusBar';
+import { Toast } from './components/Toasts';
 import type { JobProgress, MediaAsset, SavedStoryboardMeta, Scene, Storyboard } from './types';
+import { boardCounts, collectIssues, matchFilter, type Issue, type SceneFilter } from './lib/board';
 
 const SAMPLE = `Artificial intelligence is transforming modern cities. Robots and neural networks power new services every day.\n\nThe ocean remains mysterious and vast. Coral reefs shelter thousands of colorful fish beneath the waves.\n\nTravel opens new horizons. Airplanes cross continents while travelers discover food, culture, and adventure.`;
 
@@ -32,12 +36,28 @@ export default function App(): React.ReactElement {
   const [searching, setSearching] = useState<Record<number, boolean>>({});
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
+  const [filter, setFilter] = useState<SceneFilter>('all');
+  const [issuesOpen, setIssuesOpen] = useState(false);
+  const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
   const [providers, setProviders] = useState<{ name: string; configured: boolean }[]>([]);
 
   useEffect(() => {
     listProviders().then((p) => setProviders(p.providers)).catch(() => undefined);
     listStoryboards().then((s) => setSaved(s.storyboards)).catch(() => undefined);
   }, []);
+
+  // Toasts auto-dismiss after 6s.
+  useEffect(() => {
+    if (!error) return;
+    const t = setTimeout(() => setError(''), 6000);
+    return () => clearTimeout(t);
+  }, [error]);
+
+  useEffect(() => {
+    if (!notice) return;
+    const t = setTimeout(() => setNotice(''), 6000);
+    return () => clearTimeout(t);
+  }, [notice]);
 
   const missing = providers.filter((p) => !p.configured).map((p) => p.name);
 
@@ -50,8 +70,14 @@ export default function App(): React.ReactElement {
   // (done/cancelled/dismissed), show everything so empty scenes stay searchable.
   const doneIndexes =
     jobActive && job ? new Set(job.scenes.filter((s) => s.status === 'done').map((s) => s.index)) : null;
-  const visibleScenes = board ? (doneIndexes ? board.scenes.filter((s) => doneIndexes.has(s.index)) : board.scenes) : [];
+  const visibleScenes = board
+    ? (doneIndexes ? board.scenes.filter((s) => doneIndexes.has(s.index)) : board.scenes).filter((s) =>
+        matchFilter(s, filter)
+      )
+    : [];
   const hiddenCount = board ? board.scenes.length - visibleScenes.length : 0;
+  const counts = board ? boardCounts(board.scenes) : null;
+  const issues: Issue[] = collectIssues(board, providers, job);
 
   async function pollJob(id: string): Promise<void> {
     try {
@@ -208,6 +234,7 @@ export default function App(): React.ReactElement {
     try {
       await saveStoryboard(board.id, board);
       setSaved(await listStoryboards().then((s) => s.storyboards));
+      setLastSavedAt(new Date().toISOString());
       setNotice(`Storyboard saved — see it under Saved storyboards below.`);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Save failed');
@@ -238,7 +265,7 @@ export default function App(): React.ReactElement {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 text-gray-900">
+    <div className="min-h-screen bg-gray-100 pb-10 text-gray-900">
       <header className="sticky top-0 z-10 flex items-center justify-between border-b bg-white px-4 py-3 shadow-sm">
         <h1 className="text-lg font-extrabold tracking-tight">
           🎬 Script<span className="text-blue-600">2</span>Stock
@@ -266,8 +293,12 @@ export default function App(): React.ReactElement {
           ⚠️ Missing API keys for: {missing.join(', ')}. Continuing with {providers.filter((p) => p.configured).map((p) => p.name).join(', ') || 'no'} providers. Wikimedia works without keys.
         </div>
       )}
-      {error && <div className="bg-red-50 px-4 py-2 text-sm text-red-700">❌ {error}</div>}
-      {notice && <div className="bg-green-50 px-4 py-2 text-sm text-green-700">{notice}</div>}
+      {error || notice ? (
+        <div className="pointer-events-none fixed right-4 top-16 z-50 flex w-80 flex-col gap-2">
+          {error && <Toast kind="error" text={error} onDismiss={() => setError('')} />}
+          {notice && <Toast kind="notice" text={notice} onDismiss={() => setNotice('')} />}
+        </div>
+      ) : null}
 
       <main className="mx-auto grid max-w-7xl gap-4 p-4 lg:grid-cols-[340px_1fr]">
         <aside className="h-fit rounded-xl border bg-white p-4 shadow-sm lg:sticky lg:top-16">
@@ -332,55 +363,18 @@ export default function App(): React.ReactElement {
               Paste a script on the left and click <b>Generate Scenes</b>.
             </div>
           )}
-          {job && !backendDown && !jobGone && (
-            <JobProgressCard
+          {job && (
+            <ProgressRail
               job={job}
+              offline={backendDown}
+              gone={jobGone}
               onPause={() => void handlePause()}
               onResume={() => void handleResume()}
               onCancel={() => void handleCancel()}
               onPartial={() => void handlePartialView()}
+              onRetry={() => void handleRetry()}
               onDismiss={() => dismissJob()}
             />
-          )}
-          {job && backendDown && (
-            <div className="rounded-xl border border-red-200 bg-white p-4 shadow-sm">
-              <h2 className="text-sm font-bold text-red-700">⚠️ Lost connection to the backend</h2>
-              <p className="mt-1 text-sm text-gray-600">
-                The server on <code>:8000</code> stopped responding — polling is paused, so pause/cancel
-                can&apos;t reach it either. Restart it (double-click <code>start-backend.bat</code>), then retry.
-              </p>
-              <div className="mt-3 flex gap-2">
-                <button
-                  onClick={() => void handleRetry()}
-                  className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700"
-                >
-                  ↻ Retry connection
-                </button>
-                <button
-                  onClick={() => dismissJob()}
-                  className="rounded-lg bg-gray-100 px-3 py-1.5 text-xs font-semibold text-gray-600 hover:bg-gray-200"
-                >
-                  Dismiss
-                </button>
-              </div>
-            </div>
-          )}
-          {job && jobGone && !backendDown && (
-            <div className="rounded-xl border border-yellow-200 bg-white p-4 shadow-sm">
-              <h2 className="text-sm font-bold text-yellow-800">⚠️ Generation was interrupted</h2>
-              <p className="mt-1 text-sm text-gray-600">
-                The backend no longer knows this job — it likely restarted. Your script text is preserved in the
-                editor; click <b>Generate Scenes</b> to start over.
-              </p>
-              <div className="mt-3">
-                <button
-                  onClick={() => dismissJob()}
-                  className="rounded-lg bg-gray-100 px-3 py-1.5 text-xs font-semibold text-gray-600 hover:bg-gray-200"
-                >
-                  Dismiss
-                </button>
-              </div>
-            </div>
           )}
           {visibleScenes.map((s) => (
             <SceneCard
@@ -400,6 +394,15 @@ export default function App(): React.ReactElement {
           )}
         </section>
       </main>
+      <StatusBar
+        counts={counts}
+        issues={issues}
+        lastSavedAt={lastSavedAt}
+        generating={jobActive}
+        onNeedsPicks={() => setFilter('needs-pick')}
+        onShowIssues={() => setIssuesOpen(true)}
+      />
+      <IssuesDrawer open={issuesOpen} issues={issues} onClose={() => setIssuesOpen(false)} />
     </div>
   );
 }
