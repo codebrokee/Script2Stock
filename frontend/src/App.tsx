@@ -16,7 +16,9 @@ import {
 import { IssuesDrawer } from './components/IssuesDrawer';
 import { ProgressRail } from './components/ProgressRail';
 import { CommandBar, type ViewMode } from './components/CommandBar';
+import { BoardPreviewDrawer } from './components/BoardPreviewDrawer';
 import { CommandPalette, type PaletteAction } from './components/CommandPalette';
+import { ConfirmDialog } from './components/ConfirmDialog';
 import { ContextRail, type SavedSort } from './components/ContextRail';
 import { EditorPanel } from './components/EditorPanel';
 import { Inspector } from './components/Inspector';
@@ -54,6 +56,10 @@ export default function App(): React.ReactElement {
   const [dirty, setDirty] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [focus, setFocus] = useState<{ sceneId: number; assetId: number } | null>(null);
+  const [previewCache, setPreviewCache] = useState<Record<number, Storyboard>>({});
+  const [previewId, setPreviewId] = useState<number | null>(null);
+  const [pendingBoardId, setPendingBoardId] = useState<number | null>(null);
+  const fetchedPreviews = useRef<Set<number>>(new Set());
   const [compactAll, setCompactAll] = useState(false);
   const [savedQuery, setSavedQuery] = useState('');
   const [savedSort, setSavedSort] = useState<SavedSort>('newest');
@@ -375,7 +381,42 @@ export default function App(): React.ReactElement {
     }
   }
 
+  async function ensurePreviews(ids: number[]): Promise<void> {
+    const missing = ids.filter((id) => !fetchedPreviews.current.has(id));
+    if (missing.length === 0) return;
+    missing.forEach((id) => fetchedPreviews.current.add(id));
+    const results = await Promise.all(
+      missing.map(async (id) => {
+        try {
+          const { state } = await getSavedStoryboard(id);
+          return [id, state] as const;
+        } catch {
+          return null;
+        }
+      })
+    );
+    setPreviewCache((cache) => {
+      const next = { ...cache };
+      for (const r of results) if (r) next[r[0]] = r[1];
+      return next;
+    });
+  }
+
+  useEffect(() => {
+    if (viewMode !== 'library' && previewId === null) return;
+    void ensurePreviews([...saved.map((s) => s.id), ...(previewId !== null ? [previewId] : [])]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [viewMode, saved, previewId]);
+
   async function handleLoadSaved(id: number): Promise<void> {
+    if (dirty && board) {
+      setPendingBoardId(id); // dirty-guard dialog takes it from here
+      return;
+    }
+    await loadSaved(id);
+  }
+
+  async function loadSaved(id: number): Promise<void> {
     setError('');
     try {
       const { state } = await getSavedStoryboard(id);
@@ -390,6 +431,31 @@ export default function App(): React.ReactElement {
     }
   }
 
+  async function confirmSaveLoad(): Promise<void> {
+    if (pendingBoardId === null || !board) {
+      setPendingBoardId(null);
+      return;
+    }
+    try {
+      await saveStoryboard(board.id, board);
+      setSaved(await listStoryboards().then((s) => s.storyboards));
+      setLastSavedAt(new Date().toISOString());
+      setDirty(false);
+      const id = pendingBoardId;
+      setPendingBoardId(null);
+      await loadSaved(id);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Save failed');
+    }
+  }
+
+  async function confirmDiscardLoad(): Promise<void> {
+    if (pendingBoardId === null) return;
+    const id = pendingBoardId;
+    setPendingBoardId(null);
+    setDirty(false);
+    await loadSaved(id);
+  }
   function handleExport(): void {
     if (!board) return;
     const blob = new Blob([JSON.stringify(board, null, 2)], { type: 'application/json' });
@@ -559,7 +625,11 @@ export default function App(): React.ReactElement {
             </>
           )}
           {viewMode === 'library' && (
-            <LibraryGrid saved={saved} onOpen={(id) => void handleLoadSaved(id)} />
+            <LibraryGrid
+              saved={saved}
+              previews={previewCache}
+              onOpen={(id) => setPreviewId(id)}
+            />
           )}
         </section>
       </main>
@@ -572,6 +642,23 @@ export default function App(): React.ReactElement {
         onShowIssues={() => setIssuesOpen(true)}
       />
       <IssuesDrawer open={issuesOpen} issues={issues} onClose={() => setIssuesOpen(false)} />
+      <BoardPreviewDrawer
+        meta={previewId !== null ? (saved.find((s) => s.id === previewId) ?? null) : null}
+        preview={previewId !== null ? (previewCache[previewId] ?? null) : null}
+        onClose={() => setPreviewId(null)}
+        onOpen={(id) => {
+          setPreviewId(null);
+          void handleLoadSaved(id);
+        }}
+      />
+      <ConfirmDialog
+        open={pendingBoardId !== null}
+        currentTitle={board?.title ?? ''}
+        otherTitle={saved.find((s) => s.id === pendingBoardId)?.title ?? ''}
+        onSaveLoad={() => void confirmSaveLoad()}
+        onDiscardLoad={() => void confirmDiscardLoad()}
+        onCancel={() => setPendingBoardId(null)}
+      />
       {focusScene && focusAsset && (
         <Inspector
           asset={focusAsset}
