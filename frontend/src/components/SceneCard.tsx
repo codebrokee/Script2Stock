@@ -25,9 +25,11 @@ interface Props {
   onRestore?: (sceneId: number, asset: MediaAsset) => void;
   searching: boolean;
   compact?: boolean;
+  focusedAssetId?: number | null;
+  onFocusAsset?: (sceneId: number, asset: MediaAsset) => void;
 }
 
-export function SceneCard({ scene, onStatus, onManualSearch, onSimilar, onRestore, searching, compact }: Props): React.ReactElement {
+export function SceneCard({ scene, onStatus, onManualSearch, onSimilar, onRestore, searching, compact, focusedAssetId, onFocusAsset }: Props): React.ReactElement {
   const [q, setQ] = useState<string>('');
   const [showRejected, setShowRejected] = useState(false);
   const status = sceneStatus(scene);
@@ -87,6 +89,8 @@ export function SceneCard({ scene, onStatus, onManualSearch, onSimilar, onRestor
             <MediaCard
               key={m.id}
               asset={m}
+              focused={focusedAssetId === m.id}
+              onFocus={(a) => onFocusAsset?.(scene.id, a)}
               onUse={(a) => onStatus(scene.id, a, 'select')}
               onReject={(a) => onStatus(scene.id, a, 'reject')}
               onSimilar={(a) => onSimilar(scene, a)}

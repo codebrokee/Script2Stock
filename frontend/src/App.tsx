@@ -19,6 +19,7 @@ import { CommandBar, type ViewMode } from './components/CommandBar';
 import { CommandPalette, type PaletteAction } from './components/CommandPalette';
 import { ContextRail, type SavedSort } from './components/ContextRail';
 import { EditorPanel } from './components/EditorPanel';
+import { Inspector } from './components/Inspector';
 import { LibraryGrid } from './components/LibraryGrid';
 import { SceneCard } from './components/SceneCard';
 import { StatusBar } from './components/StatusBar';
@@ -52,6 +53,7 @@ export default function App(): React.ReactElement {
   const [viewMode, setViewMode] = useState<ViewMode>(() => viewFromHash());
   const [dirty, setDirty] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
+  const [focus, setFocus] = useState<{ sceneId: number; assetId: number } | null>(null);
   const [compactAll, setCompactAll] = useState(false);
   const [savedQuery, setSavedQuery] = useState('');
   const [savedSort, setSavedSort] = useState<SavedSort>('newest');
@@ -101,6 +103,8 @@ export default function App(): React.ReactElement {
   const hiddenCount = board ? board.scenes.length - visibleScenes.length : 0;
   const counts = board ? boardCounts(board.scenes) : null;
   const issues: Issue[] = collectIssues(board, providers, job);
+  const focusScene = focus ? (board?.scenes.find((s) => s.id === focus.sceneId) ?? null) : null;
+  const focusAsset = focusScene?.media.find((m) => m.id === focus?.assetId) ?? null;
 
   async function pollJob(id: string): Promise<void> {
     try {
@@ -262,6 +266,67 @@ export default function App(): React.ReactElement {
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, []);
+
+  // Board navigation shortcuts: j/k scenes, arrows media, Enter/X/S actions, Esc unfocus.
+  // Re-registered every render so closures stay fresh; skipped while typing or paletting.
+  useEffect(() => {
+    function focusCard(sceneId: number, assetId: number): void {
+      setFocus({ sceneId, assetId });
+      document.getElementById(`media-${assetId}`)?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function onKey(e: KeyboardEvent): void {
+      if (paletteOpen) return;
+      const t = e.target as HTMLElement | null;
+      const typing =
+        !!t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT');
+      if (e.key === 'Escape') {
+        if (typing) t?.blur();
+        setFocus(null);
+        return;
+      }
+      if (typing || e.metaKey || e.ctrlKey || e.altKey) return;
+      if (t && (t.tagName === 'BUTTON' || t.tagName === 'A')) return; // let focused controls behave natively
+      const withCands = visibleScenes.filter((s) => s.media.some((m) => m.status !== 'rejected'));
+      const cands = (s: Scene) => s.media.filter((m) => m.status !== 'rejected');
+      const focusScene = focus ? (board?.scenes.find((s) => s.id === focus.sceneId) ?? null) : null;
+      const focusAsset = focusScene?.media.find((m) => m.id === focus?.assetId) ?? null;
+
+      if (e.key === 'j' || e.key === 'k' || e.key === 'J' || e.key === 'K') {
+        if (withCands.length === 0) return;
+        e.preventDefault();
+        const at = focus ? withCands.findIndex((s) => s.id === focus.sceneId) : -1;
+        const idx =
+          e.key === 'j' || e.key === 'J'
+            ? Math.min(withCands.length - 1, at + 1)
+            : at <= 0
+              ? withCands.length - 1
+              : at - 1;
+        const sc = withCands[idx];
+        const first = cands(sc)[0];
+        if (first) {
+          document.getElementById(`scene-${sc.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          focusCard(sc.id, first.id);
+        }
+      } else if ((e.key === 'ArrowRight' || e.key === 'ArrowLeft') && focus && focusScene) {
+        const list = cands(focusScene);
+        const i = list.findIndex((m) => m.id === focus.assetId);
+        const n = e.key === 'ArrowRight' ? Math.min(list.length - 1, i + 1) : Math.max(0, i - 1);
+        e.preventDefault();
+        if (list[n]) focusCard(focusScene.id, list[n].id);
+      } else if (e.key === 'Enter' && focus && focusAsset) {
+        e.preventDefault();
+        void handleStatus(focus.sceneId, focusAsset, 'select');
+      } else if ((e.key === 'x' || e.key === 'X') && focus && focusAsset) {
+        void handleStatus(focus.sceneId, focusAsset, 'reject');
+      } else if ((e.key === 's' || e.key === 'S') && focus && focusScene && focusAsset) {
+        handleSimilar(focusScene, focusAsset);
+      }
+    }
+
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  });
 
   function patchScene(sceneId: number, fn: (s: Scene) => Scene): void {
     setBoard((b) => (b ? { ...b, scenes: b.scenes.map((s) => (s.id === sceneId ? fn(s) : s)) } : b));
@@ -482,6 +547,8 @@ export default function App(): React.ReactElement {
               onSimilar={handleSimilar}
               onRestore={handleRestore}
               compact={compactAll}
+              focusedAssetId={focus?.sceneId === s.id ? (focus?.assetId ?? null) : null}
+              onFocusAsset={(sid, a) => setFocus({ sceneId: sid, assetId: a.id })}
             />
           ))}
           {hiddenCount > 0 && (
@@ -505,6 +572,16 @@ export default function App(): React.ReactElement {
         onShowIssues={() => setIssuesOpen(true)}
       />
       <IssuesDrawer open={issuesOpen} issues={issues} onClose={() => setIssuesOpen(false)} />
+      {focusScene && focusAsset && (
+        <Inspector
+          asset={focusAsset}
+          sceneIndex={focusScene.index}
+          onClose={() => setFocus(null)}
+          onUse={() => void handleStatus(focusScene.id, focusAsset, 'select')}
+          onReject={() => void handleStatus(focusScene.id, focusAsset, 'reject')}
+          onSimilar={() => handleSimilar(focusScene, focusAsset)}
+        />
+      )}
     </div>
   );
 }

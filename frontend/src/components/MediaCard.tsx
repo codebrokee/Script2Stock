@@ -11,9 +11,11 @@ interface Props {
   /** Restore a rejected card to candidate. Session-local: no backend endpoint resets status. */
   onUndo?: (a: MediaAsset) => void;
   loading?: boolean;
+  focused?: boolean;
+  onFocus?: (a: MediaAsset) => void;
 }
 
-export function MediaCard({ asset, onUse, onReject, onSimilar, onUndo, loading }: Props): React.ReactElement {
+export function MediaCard({ asset, onUse, onReject, onSimilar, onUndo, loading, focused, onFocus }: Props): React.ReactElement {
   if (loading) {
     return (
       <div className="overflow-hidden rounded-xl bg-surface shadow-sm ring-1 ring-gray-200">
@@ -39,13 +41,23 @@ export function MediaCard({ asset, onUse, onReject, onSimilar, onUndo, loading }
   const lowRes = asset.width > 0 && asset.width < 1280;
 
   return (
-    <div className={`relative overflow-hidden rounded-xl bg-surface shadow-sm transition ${frame}`}>
+    <div
+      id={`media-${asset.id}`}
+      className={`relative scroll-mt-28 overflow-hidden rounded-xl bg-surface shadow-sm transition ${frame} ${
+        focused ? 'ring-2 ring-accent' : ''
+      }`}
+    >
       {status === 'selected' && (
         <span className="absolute right-0 top-2 z-10 rounded-l bg-success px-1.5 py-0.5 text-[10px] font-bold tracking-wide text-white">
           SELECTED
         </span>
       )}
-      <div className="relative aspect-video w-full bg-gray-100">
+      <button
+        type="button"
+        onClick={() => onFocus?.(asset)}
+        title="Inspect (opens details)"
+        className="relative block aspect-video w-full cursor-zoom-in bg-gray-100 text-left"
+      >
         {thumb ? (
           <img
             src={thumb}
@@ -70,7 +82,7 @@ export function MediaCard({ asset, onUse, onReject, onSimilar, onUndo, loading }
             <span className="rounded bg-warn px-1 py-px text-[10px] font-semibold text-white">low-res</span>
           )}
         </div>
-      </div>
+      </button>
       <div className="space-y-1 p-2">
         <div className="truncate text-xs font-medium" title={asset.title}>
           {asset.title || `${asset.provider} ${asset.provider_id}`}
