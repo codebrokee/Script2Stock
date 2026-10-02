@@ -7,7 +7,8 @@ from collections.abc import Callable
 import httpx
 from sqlmodel import Session, select
 
-from . import query_generator, ranker, scene_splitter
+from . import ranker, scene_splitter
+from .core import pipeline as matching
 from .cache import cache_get, cache_key, cache_set, fetch_thumbnail
 from .config import settings
 from .jobs import Job, JobCancelled
@@ -46,7 +47,7 @@ def create_script_with_scenes(session: Session, title: str, text: str) -> tuple[
     session.commit()
     for sc in scenes:
         session.refresh(sc)
-        queries = query_generator.generate_queries(sc.narration)
+        queries = matching.queries_for_scene(sc.narration)
         for rank, q in enumerate(queries):
             session.add(SearchQuery(scene_id=sc.id, query=q, rank=rank))
     session.commit()

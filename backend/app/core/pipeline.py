@@ -10,13 +10,15 @@ from __future__ import annotations
 
 from typing import Sequence
 
-from .. import query_generator, ranker
+from .. import ranker
 from ..models import MediaAsset
 
 
-def queries_for_scene(narration: str, max_queries: int = 6) -> list[str]:
+def queries_for_scene(narration: str, max_queries: int = 8) -> list[str]:
     """Search queries for one scene (Layer 1: shape + concept expansion)."""
-    return query_generator.generate_queries(narration, max_queries=max_queries)
+    from .querygen import generate_queries
+
+    return generate_queries(narration, max_queries=max_queries)
 
 
 def rank_scene(
