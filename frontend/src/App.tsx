@@ -77,19 +77,6 @@ export default function App(): React.ReactElement {
     listStoryboards().then((s) => setSaved(s.storyboards)).catch(() => undefined);
   }, []);
 
-  // Toasts auto-dismiss after 6s.
-  useEffect(() => {
-    if (!error) return;
-    const t = setTimeout(() => setError(''), 6000);
-    return () => clearTimeout(t);
-  }, [error]);
-
-  useEffect(() => {
-    if (!notice) return;
-    const t = setTimeout(() => setNotice(''), 6000);
-    return () => clearTimeout(t);
-  }, [notice]);
-
   const missing = providers.filter((p) => !p.configured).map((p) => p.name);
 
   const jobId = job?.job_id ?? null;

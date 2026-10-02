@@ -155,7 +155,7 @@ export function ProgressRail({
         <div className="mt-2">
           <div className="h-2 w-full overflow-hidden rounded-pill bg-elevated">
             <div
-              className="h-full rounded-pill bg-accent transition-all duration-500"
+              className="h-full rounded-pill bg-accent transition-[width] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]"
               style={{ width: `${pct}%` }}
             />
           </div>

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import type { MediaAsset, Scene } from '../types';
 import { sceneStatus, type SceneStatus } from '../lib/board';
-import { MediaCard } from './MediaCard';
+import { MediaCard, MediaCardSkeleton } from './MediaCard';
 
 const PILL: Record<SceneStatus, string> = {
   done: 'bg-success-soft text-success',
@@ -79,7 +79,14 @@ export function SceneCard({ scene, onStatus, onManualSearch, onSimilar, onRestor
           {searching ? '…' : 'Search'}
         </button>
       </form>
-      {visible.length === 0 ? (
+      {searching && (
+        <div className="mb-3 grid grid-cols-2 gap-2 md:grid-cols-3 xl:grid-cols-4" aria-label="Searching media">
+          {[0, 1, 2, 3].map((i) => (
+            <MediaCardSkeleton key={i} />
+          ))}
+        </div>
+      )}
+      {visible.length === 0 && !searching ? (
         <p className="rounded-control bg-surface p-4 text-center text-sm text-secondary">
           No media found — try manual search
         </p>

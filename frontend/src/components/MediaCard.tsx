@@ -16,17 +16,21 @@ interface Props {
   onFocus?: (a: MediaAsset) => void;
 }
 
+export function MediaCardSkeleton(): React.ReactElement {
+  return (
+    <div className="overflow-hidden rounded-card bg-surface shadow-card ring-1 ring-border-subtle" aria-hidden>
+      <div className="aspect-video w-full animate-pulse bg-elevated" />
+      <div className="space-y-2 p-2">
+        <div className="h-3 w-3/4 animate-pulse rounded-control bg-elevated" />
+        <div className="h-3 w-1/2 animate-pulse rounded-control bg-elevated" />
+      </div>
+    </div>
+  );
+}
+
 export function MediaCard({ asset, onUse, onReject, onSimilar, onUndo, loading, focused, onFocus }: Props): React.ReactElement {
   if (loading) {
-    return (
-      <div className="overflow-hidden rounded-card bg-surface shadow-card ring-1 ring-border-subtle">
-        <div className="aspect-video w-full animate-pulse bg-elevated" />
-        <div className="space-y-2 p-2">
-          <div className="h-3 w-3/4 animate-pulse rounded-control bg-elevated" />
-          <div className="h-3 w-1/2 animate-pulse rounded-control bg-elevated" />
-        </div>
-      </div>
-    );
+    return <MediaCardSkeleton />;
   }
 
   const status = asset.status;
@@ -44,7 +48,7 @@ export function MediaCard({ asset, onUse, onReject, onSimilar, onUndo, loading, 
   return (
     <div
       id={`media-${asset.id}`}
-      className={`relative scroll-mt-28 overflow-hidden rounded-card bg-surface shadow-card transition ${frame} ${
+      className={`relative scroll-mt-28 overflow-hidden rounded-card bg-surface shadow-card transition hover:-translate-y-px hover:shadow-lift ${frame} ${
         focused ? 'ring-2 ring-accent' : ''
       }`}
     >
