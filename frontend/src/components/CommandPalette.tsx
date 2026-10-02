@@ -46,8 +46,9 @@ export function CommandPalette({ open, actions, onClose }: Props): React.ReactEl
 
   return (
     <div className="fixed inset-0 z-50" role="dialog" aria-label="Command palette">
+      {/* [overlay] dim backdrop; pure black keeps photos legible behind drawers */}
       <div className="absolute inset-0 bg-black/30" onClick={onClose} />
-      <div className="absolute left-1/2 top-24 w-full max-w-md -translate-x-1/2 overflow-hidden rounded-xl bg-white shadow-2xl">
+      <div className="absolute left-1/2 top-24 w-full max-w-md -translate-x-1/2 overflow-hidden rounded-card bg-surface shadow-lift">
         <input
           ref={inputRef}
           value={q}
@@ -74,16 +75,16 @@ export function CommandPalette({ open, actions, onClose }: Props): React.ReactEl
               <button
                 onClick={() => choose(i)}
                 onMouseEnter={() => setSel(i)}
-                className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm ${
-                  i === sel ? 'bg-accent-soft text-accent-strong' : 'text-gray-700'
+                className={`flex w-full items-center gap-2 rounded-control px-3 py-2 text-left text-sm ${
+                  i === sel ? 'bg-accent-soft text-accent-text' : 'text-primary'
                 }`}
               >
                 <span className="flex-1">{a.label}</span>
-                {a.hint && <span className="text-[11px] text-gray-400">{a.hint}</span>}
+                {a.hint && <span className="text-[11px] text-tertiary">{a.hint}</span>}
               </button>
             </li>
           ))}
-          {items.length === 0 && <li className="px-3 py-4 text-center text-sm text-gray-400">No matches</li>}
+          {items.length === 0 && <li className="px-3 py-4 text-center text-sm text-tertiary">No matches</li>}
         </ul>
       </div>
     </div>

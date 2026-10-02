@@ -2,14 +2,14 @@ import React from 'react';
 
 export function LicenseBadge({ license }: { license: string }): React.ReactElement {
   const l = (license || 'unknown').toLowerCase();
-  let cls = 'bg-gray-200 text-gray-700';
+  let cls = 'bg-elevated text-tertiary';
   let label = license || 'unknown';
   if (l.includes('cc0') || l.includes('public domain')) {
-    cls = 'bg-green-200 text-green-800';
+    cls = 'bg-success-soft text-success';
   } else if (l === 'cc-by' || l.includes('cc-by')) {
-    cls = 'bg-yellow-200 text-yellow-800';
+    cls = 'bg-warn-soft text-warn';
   } else if (l.includes('commercial-free') || l.includes('pexels') || l.includes('pixabay')) {
-    cls = 'bg-blue-200 text-blue-800';
+    cls = 'bg-accent-soft text-accent-text';
   }
-  return <span className={`inline-block rounded px-1.5 py-0.5 text-[11px] font-semibold ${cls}`}>{label}</span>;
+  return <span className={`inline-block rounded-control px-1.5 py-0.5 text-[11px] font-semibold ${cls}`}>{label}</span>;
 }

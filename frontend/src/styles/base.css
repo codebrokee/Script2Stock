@@ -1,0 +1,79 @@
+/* Global base styles for Studio Dark. */
+
+html,
+body {
+  overflow-x: clip;
+}
+
+body {
+  -webkit-font-smoothing: antialiased;
+  background-color: var(--bg-base);
+  color: var(--text-primary);
+}
+
+img,
+video {
+  max-width: 100%;
+  display: block;
+}
+
+/* Consistent press/hover feel on everything interactive. */
+button,
+a,
+input,
+select,
+textarea,
+[role='button'] {
+  transition:
+    background-color 150ms ease-out,
+    border-color 150ms ease-out,
+    color 150ms ease-out,
+    box-shadow 150ms ease-out,
+    opacity 150ms ease-out,
+    transform 200ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 2px var(--bg-base),
+    0 0 0 4px var(--accent);
+}
+
+/* Thin scrollbars tinted to the theme. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
+}
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+*::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 8px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Anchor offset for jump-to-scene scrolling under the sticky header. */
+.scene-card {
+  scroll-margin-top: 72px;
+}
+
+/* Long metadata (URLs, license strings) may break anywhere. */
+.prose-safe {
+  overflow-wrap: anywhere;
+}

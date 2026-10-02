@@ -34,16 +34,16 @@ export function ProgressRail({
 
   if (gone && !offline) {
     return (
-      <div className="rounded-xl border border-warn/40 bg-warn-soft p-4 shadow-sm">
-        <h2 className="text-sm font-bold text-warn-strong">⚠️ Generation was interrupted</h2>
-        <p className="mt-1 text-sm text-gray-600">
+      <div className="rounded-card border border-warn/40 bg-warn-soft p-4 shadow-card">
+        <h2 className="text-sm font-bold text-warn">⚠️ Generation was interrupted</h2>
+        <p className="mt-1 text-sm text-secondary">
           The backend no longer knows this job — it likely restarted. Your script text is preserved in the
           editor; click <b>Generate Scenes</b> to start over.
         </p>
         <div className="mt-3">
           <button
             onClick={onDismiss}
-            className="rounded-lg bg-white px-3 py-1.5 text-xs font-semibold text-gray-600 ring-1 ring-gray-200 hover:bg-gray-50"
+            className="rounded-control bg-surface px-3 py-1.5 text-xs font-semibold text-secondary ring-1 ring-border-subtle hover:bg-inset"
           >
             Dismiss
           </button>
@@ -54,22 +54,22 @@ export function ProgressRail({
 
   if (offline) {
     return (
-      <div className="rounded-xl border border-danger/40 bg-danger-soft p-4 shadow-sm">
-        <h2 className="text-sm font-bold text-danger-strong">⚠️ Lost connection to the backend</h2>
-        <p className="mt-1 text-sm text-gray-600">
+      <div className="rounded-card border border-danger/40 bg-danger-soft p-4 shadow-card">
+        <h2 className="text-sm font-bold text-danger">⚠️ Lost connection to the backend</h2>
+        <p className="mt-1 text-sm text-secondary">
           The server on <code>:8000</code> stopped responding — polling is paused, so pause/cancel can&apos;t
           reach it either. Restart it (double-click <code>start-backend.bat</code>), then retry.
         </p>
         <div className="mt-3 flex gap-2">
           <button
             onClick={onRetry}
-            className="rounded-lg bg-danger px-3 py-1.5 text-xs font-semibold text-white hover:bg-danger-strong"
+            className="rounded-control bg-danger px-3 py-1.5 text-xs font-semibold text-primary hover:brightness-110"
           >
             ↻ Retry connection
           </button>
           <button
             onClick={onDismiss}
-            className="rounded-lg bg-white px-3 py-1.5 text-xs font-semibold text-gray-600 ring-1 ring-gray-200 hover:bg-gray-50"
+            className="rounded-control bg-surface px-3 py-1.5 text-xs font-semibold text-secondary ring-1 ring-border-subtle hover:bg-inset"
           >
             Dismiss
           </button>
@@ -82,25 +82,25 @@ export function ProgressRail({
     // Terminal states stay collapsed to a single summary line.
     const icon = job.status === 'done' ? '✅' : job.status === 'error' ? '❌' : '⏹';
     return (
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm shadow-sm">
-        <span className="font-bold text-gray-800">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-card border border-subtle bg-surface px-4 py-2.5 text-sm shadow-card">
+        <span className="font-bold text-primary">
           {icon} {job.stage}
         </span>
-        <span className="text-xs text-gray-400">
+        <span className="text-xs text-tertiary">
           {job.done_scenes}/{job.total_scenes} scenes · {job.media_found} assets · {job.elapsed.toFixed(0)}s
         </span>
         <span className="flex-1" />
         {job.status !== 'done' && job.script_id !== null && (
           <button
             onClick={onPartial}
-            className="rounded-lg bg-blue-600 px-3 py-1 text-xs font-semibold text-white hover:bg-blue-700"
+            className="rounded-control bg-accent px-3 py-1 text-xs font-semibold text-primary hover:bg-accent-hover"
           >
             View partial storyboard
           </button>
         )}
         <button
           onClick={onDismiss}
-          className="rounded-lg bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-600 hover:bg-gray-200"
+          className="rounded-control bg-elevated px-3 py-1 text-xs font-semibold text-secondary hover:bg-border-subtle"
         >
           Dismiss
         </button>
@@ -109,19 +109,19 @@ export function ProgressRail({
   }
 
   return (
-    <div className="rounded-xl border border-accent/30 bg-white p-3 shadow-sm">
+    <div className="rounded-card border border-accent/30 bg-surface p-3 shadow-card">
       <div className="flex items-center gap-2 text-sm">
         <button
           onClick={() => setExpanded((v) => !v)}
           aria-label={expanded ? 'Collapse progress' : 'Expand progress'}
-          className="rounded px-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+          className="rounded-control px-1 text-tertiary hover:bg-elevated hover:text-primary"
         >
           {expanded ? '▾' : '▸'}
         </button>
-        <span className="font-bold text-gray-800">{job.paused ? '⏸ Paused' : '⏳ Generating'}</span>
-        <span className="tabular-nums text-xs text-gray-400">{pct}%</span>
+        <span className="font-bold text-primary">{job.paused ? '⏸ Paused' : '⏳ Generating'}</span>
+        <span className="tabular-nums text-xs text-tertiary">{pct}%</span>
         {!expanded && (
-          <span className="truncate text-xs text-gray-500" title={job.stage}>
+          <span className="truncate text-xs text-secondary" title={job.stage}>
             {job.stage}
           </span>
         )}
@@ -129,7 +129,7 @@ export function ProgressRail({
         {job.paused ? (
           <button
             onClick={onResume}
-            className="rounded-lg bg-success px-2.5 py-1 text-xs font-semibold text-white hover:bg-success-strong"
+            className="rounded-control bg-success px-2.5 py-1 text-xs font-semibold text-primary hover:brightness-110"
           >
             ▶ Resume
           </button>
@@ -137,7 +137,7 @@ export function ProgressRail({
           <button
             onClick={onPause}
             title="Pause after the current scene finishes"
-            className="rounded-lg bg-warn-soft px-2.5 py-1 text-xs font-semibold text-warn-strong hover:bg-warn hover:text-white"
+            className="rounded-control bg-warn-soft px-2.5 py-1 text-xs font-semibold text-warn hover:bg-warn hover:text-primary"
           >
             ⏸ Pause
           </button>
@@ -145,7 +145,7 @@ export function ProgressRail({
         <button
           onClick={onCancel}
           title="Stop now — scenes finished so far are kept"
-          className="rounded-lg border border-danger/40 px-2.5 py-1 text-xs font-semibold text-danger hover:bg-danger-soft"
+          className="rounded-control border border-danger/40 px-2.5 py-1 text-xs font-semibold text-danger hover:bg-danger-soft"
         >
           ⏹ Cancel
         </button>
@@ -153,16 +153,16 @@ export function ProgressRail({
 
       {expanded ? (
         <div className="mt-2">
-          <div className="h-2 w-full overflow-hidden rounded-full bg-gray-100">
+          <div className="h-2 w-full overflow-hidden rounded-pill bg-elevated">
             <div
-              className="h-full rounded-full bg-accent transition-all duration-500"
+              className="h-full rounded-pill bg-accent transition-all duration-500"
               style={{ width: `${pct}%` }}
             />
           </div>
-          <p className="mt-1.5 truncate text-xs text-gray-600" title={job.stage}>
+          <p className="mt-1.5 truncate text-xs text-secondary" title={job.stage}>
             {job.stage}
           </p>
-          <p className="mt-0.5 text-[11px] text-gray-400">
+          <p className="mt-0.5 text-[11px] text-tertiary">
             {job.done_scenes}/{job.total_scenes} scenes · {job.media_found} assets · {job.elapsed.toFixed(0)}s
             elapsed
           </p>
@@ -171,16 +171,16 @@ export function ProgressRail({
               {[...job.scenes]
                 .sort((a, b) => a.index - b.index)
                 .map((s) => (
-                  <li key={s.index} className="flex items-center gap-2 text-xs text-gray-600">
+                  <li key={s.index} className="flex items-center gap-2 text-xs text-secondary">
                     {s.status === 'done' && <span className="text-success">✓</span>}
                     {s.status === 'active' && (
                       <span
-                        className={`inline-block h-2 w-2 rounded-full ${job.paused ? 'bg-warn' : 'animate-pulse bg-accent'}`}
+                        className={`inline-block h-2 w-2 rounded-pill ${job.paused ? 'bg-warn' : 'animate-pulse bg-accent'}`}
                       />
                     )}
-                    {s.status === 'pending' && <span className="text-gray-300">○</span>}
+                    {s.status === 'pending' && <span className="text-tertiary">○</span>}
                     <span>Scene {s.index + 1}</span>
-                    {s.status === 'done' && <span className="text-gray-400">· {s.media} assets</span>}
+                    {s.status === 'done' && <span className="text-tertiary">· {s.media} assets</span>}
                   </li>
                 ))}
             </ul>
@@ -189,7 +189,7 @@ export function ProgressRail({
             <button
               onClick={onPartial}
               title="Use the finished scenes now — generation keeps its state"
-              className="mt-2 rounded-lg bg-accent px-3 py-1.5 text-xs font-semibold text-white hover:bg-accent-strong"
+              className="mt-2 rounded-control bg-accent px-3 py-1.5 text-xs font-semibold text-primary hover:bg-accent-hover"
             >
               View partial results
             </button>

@@ -9,7 +9,7 @@ export type SavedSort = 'newest' | 'oldest' | 'title';
 const DOT: Record<SceneStatus, string> = {
   done: 'bg-success',
   'needs-pick': 'bg-accent',
-  pending: 'bg-gray-300',
+  pending: 'bg-border-strong',
   error: 'bg-danger'
 };
 
@@ -60,11 +60,11 @@ export function ContextRail(props: Props): React.ReactElement {
 
   if (collapsed) {
     return (
-      <div className="flex w-12 flex-col items-center gap-1 rounded-xl border bg-white p-2 shadow-sm">
+      <div className="flex w-12 flex-col items-center gap-1 rounded-card border bg-surface p-2 shadow-card">
         <button
           onClick={onToggleCollapse}
           title="Expand panel"
-          className="rounded p-1.5 text-gray-500 hover:bg-gray-100"
+          className="rounded-control p-1.5 text-secondary hover:bg-elevated"
         >
           »
         </button>
@@ -76,7 +76,7 @@ export function ContextRail(props: Props): React.ReactElement {
               onMode(m.id);
               onToggleCollapse();
             }}
-            className={`rounded p-1.5 text-base hover:bg-gray-100 ${mode === m.id ? 'bg-accent-soft' : ''}`}
+            className={`rounded-control p-1.5 text-base hover:bg-elevated ${mode === m.id ? 'bg-accent-soft' : ''}`}
           >
             {m.icon}
           </button>
@@ -86,15 +86,15 @@ export function ContextRail(props: Props): React.ReactElement {
   }
 
   return (
-    <div className="w-[280px] rounded-xl border bg-white p-4 shadow-sm">
+    <div className="w-[280px] rounded-card border bg-surface p-4 shadow-card">
       <div className="mb-3 flex items-center gap-1">
         {MODES.map((m) => (
           <button
             key={m.id}
             onClick={() => onMode(m.id)}
             title={m.label}
-            className={`flex-1 rounded-lg px-2 py-1.5 text-xs font-semibold ${
-              mode === m.id ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            className={`flex-1 rounded-control px-2 py-1.5 text-xs font-semibold ${
+              mode === m.id ? 'bg-accent text-primary' : 'bg-elevated text-secondary hover:bg-border-subtle'
             }`}
           >
             {m.icon} {m.label}
@@ -103,7 +103,7 @@ export function ContextRail(props: Props): React.ReactElement {
         <button
           onClick={onToggleCollapse}
           title="Collapse panel"
-          className="rounded p-1.5 text-gray-400 hover:bg-gray-100"
+          className="rounded-control p-1.5 text-tertiary hover:bg-elevated"
         >
           «
         </button>
@@ -133,7 +133,7 @@ function EditorPane(p: Props): React.ReactElement {
 
 function BoardPane(p: Props): React.ReactElement {
   if (p.scenes.length === 0) {
-    return <p className="text-xs text-gray-400">No board loaded — generate a script or load a saved board.</p>;
+    return <p className="text-xs text-tertiary">No board loaded — generate a script or load a saved board.</p>;
   }
   return (
     <div>
@@ -142,15 +142,15 @@ function BoardPane(p: Props): React.ReactElement {
           <button
             key={f.id}
             onClick={() => p.onFilter(f.id)}
-            className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
-              p.filter === f.id ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            className={`rounded-pill px-2 py-0.5 text-[11px] font-semibold ${
+              p.filter === f.id ? 'bg-accent text-primary' : 'bg-elevated text-secondary hover:bg-border-subtle'
             }`}
           >
             {f.label}
           </button>
         ))}
       </div>
-      <label className="mb-2 flex cursor-pointer items-center gap-2 text-xs text-gray-600">
+      <label className="mb-2 flex cursor-pointer items-center gap-2 text-xs text-secondary">
         <input type="checkbox" checked={p.compactAll} onChange={(e) => p.onCompactAll(e.target.checked)} />
         Compact cards
       </label>
@@ -163,12 +163,12 @@ function BoardPane(p: Props): React.ReactElement {
               <button
                 onClick={() => p.onJumpScene(s.id)}
                 title={s.narration}
-                className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left hover:bg-gray-100"
+                className="flex w-full items-center gap-2 rounded-control px-2 py-1.5 text-left hover:bg-elevated"
               >
-                <span className={`h-2 w-2 shrink-0 rounded-full ${DOT[st]}`} />
-                <span className="shrink-0 text-[11px] font-bold text-gray-400">{s.index + 1}</span>
-                <span className="min-w-0 flex-1 truncate text-xs text-gray-700">{s.narration}</span>
-                {picks > 0 && <span className="shrink-0 text-[11px] text-success-strong">✓</span>}
+                <span className={`h-2 w-2 shrink-0 rounded-pill ${DOT[st]}`} />
+                <span className="shrink-0 text-[11px] font-bold text-tertiary">{s.index + 1}</span>
+                <span className="min-w-0 flex-1 truncate text-xs text-primary">{s.narration}</span>
+                {picks > 0 && <span className="shrink-0 text-[11px] text-success">✓</span>}
               </button>
             </li>
           );
@@ -193,37 +193,37 @@ function LibraryPane(p: Props): React.ReactElement {
         value={p.savedQuery}
         onChange={(e) => p.onSavedQuery(e.target.value)}
         placeholder="Filter saved…"
-        className="mb-2 w-full rounded-lg border border-gray-300 px-2.5 py-1.5 text-xs focus:border-blue-500 focus:outline-none"
+        className="mb-2 w-full rounded-control border border-subtle px-2.5 py-1.5 text-xs focus:border-accent focus:outline-none"
       />
       <select
         value={p.savedSort}
         onChange={(e) => p.onSavedSort(e.target.value as SavedSort)}
-        className="mb-2 w-full rounded-lg border border-gray-300 px-2 py-1.5 text-xs text-gray-600"
+        className="mb-2 w-full rounded-control border border-subtle px-2 py-1.5 text-xs text-secondary"
       >
         <option value="newest">Newest first</option>
         <option value="oldest">Oldest first</option>
         <option value="title">By title</option>
       </select>
       {items.length === 0 ? (
-        <p className="text-xs text-gray-400">Nothing saved yet — use “Save Storyboard” up top.</p>
+        <p className="text-xs text-tertiary">Nothing saved yet — use “Save Storyboard” up top.</p>
       ) : (
         <ul className="max-h-[50vh] space-y-1.5 overflow-y-auto">
           {items.map((s) => (
             <li
               key={s.id}
-              className="flex items-center justify-between gap-2 rounded-lg bg-gray-50 px-2.5 py-1.5 text-xs"
+              className="flex items-center justify-between gap-2 rounded-control bg-inset px-2.5 py-1.5 text-xs"
             >
               <span className="min-w-0">
-                <span className="block truncate font-semibold text-gray-700" title={s.title}>
+                <span className="block truncate font-semibold text-primary" title={s.title}>
                   {s.title}
                 </span>
-                <span className="text-[11px] text-gray-400">
+                <span className="text-[11px] text-tertiary">
                   {s.scene_count} scenes · {new Date(s.created_at).toLocaleString()}
                 </span>
               </span>
               <button
                 onClick={() => p.onLoadSaved(s.id)}
-                className="shrink-0 rounded bg-blue-100 px-2 py-1 font-semibold text-blue-700 hover:bg-blue-200"
+                className="shrink-0 rounded-control bg-accent-soft px-2 py-1 font-semibold text-accent-text hover:brightness-125"
               >
                 Load
               </button>

@@ -496,7 +496,7 @@ export default function App(): React.ReactElement {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-100 pb-10 text-gray-900">
+    <div className="min-h-screen bg-elevated pb-10 text-primary">
       <CommandBar
         view={viewMode}
         onView={setViewMode}
@@ -509,7 +509,7 @@ export default function App(): React.ReactElement {
       <CommandPalette open={paletteOpen} actions={actions} onClose={() => setPaletteOpen(false)} />
 
       {missing.length > 0 && (
-        <div className="border-b border-yellow-200 bg-yellow-50 px-4 py-2 text-sm text-yellow-800">
+        <div className="border-b border-warn/40 bg-warn-soft px-4 py-2 text-sm text-warn">
           ⚠️ Missing API keys for: {missing.join(', ')}. Continuing with {providers.filter((p) => p.configured).map((p) => p.name).join(', ') || 'no'} providers. Wikimedia works without keys.
         </div>
       )}
@@ -588,7 +588,7 @@ export default function App(): React.ReactElement {
           {viewMode === 'storyboard' && (
             <>
               {filter !== 'all' && board && (
-            <div className="flex items-center gap-2 rounded-xl border border-accent/30 bg-accent-soft px-3 py-1.5 text-xs text-accent-strong">
+            <div className="flex items-center gap-2 rounded-card border border-accent/30 bg-accent-soft px-3 py-1.5 text-xs text-accent-text">
               <span>
                 Filter: <b>{filter}</b> — showing {visibleScenes.length}/{board.scenes.length} scenes
               </span>
@@ -599,7 +599,7 @@ export default function App(): React.ReactElement {
             </div>
           )}
           {!board && !job && (
-            <div className="rounded-xl border border-dashed bg-white p-10 text-center text-sm text-gray-400">
+            <div className="rounded-card border border-dashed bg-surface p-10 text-center text-sm text-tertiary">
               Paste a script on the left and click <b>Generate Scenes</b>.
             </div>
           )}
@@ -618,7 +618,7 @@ export default function App(): React.ReactElement {
             />
           ))}
           {hiddenCount > 0 && (
-            <div className="rounded-xl border border-dashed bg-white p-6 text-center text-sm text-gray-400">
+            <div className="rounded-card border border-dashed bg-surface p-6 text-center text-sm text-tertiary">
               ⏳ {hiddenCount} more scene{hiddenCount === 1 ? '' : 's'} still generating…
             </div>
           )}

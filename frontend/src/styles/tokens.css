@@ -1,0 +1,33 @@
+/* Studio Dark — semantic color tokens.
+ * Tailwind config mirrors these values (see tailwind.config.js) so opacity
+ * modifiers keep working. Photo-overlay constants (pure black/white) are
+ * intentionally NOT tokens — see usages marked [overlay]. */
+:root {
+  color-scheme: dark;
+
+  --bg-base: #0b0b0f;
+  --bg-surface: #131318;
+  --bg-elevated: #1c1c23;
+  --bg-inset: #0f0f14;
+
+  --border-subtle: #23232c;
+  --border-strong: #2f2f3a;
+
+  --text-primary: #ececf1;
+  --text-secondary: #a1a1aa;
+  --text-tertiary: #71717a;
+
+  --accent: #7c5cff;
+  --accent-hover: #6d4ce8;
+  --accent-soft: #1e1a33;
+  --accent-text: #b4a3ff;
+
+  --success: #34d399;
+  --success-soft: #0d281f;
+
+  --warn: #fbbf24;
+  --warn-soft: #2a1f08;
+
+  --danger: #fb7185;
+  --danger-soft: #2b1019;
+}

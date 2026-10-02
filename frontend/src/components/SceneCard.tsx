@@ -4,10 +4,10 @@ import { sceneStatus, type SceneStatus } from '../lib/board';
 import { MediaCard } from './MediaCard';
 
 const PILL: Record<SceneStatus, string> = {
-  done: 'bg-success-soft text-success-strong',
-  'needs-pick': 'bg-accent-soft text-accent-strong',
-  pending: 'bg-gray-100 text-gray-500',
-  error: 'bg-danger-soft text-danger-strong'
+  done: 'bg-success-soft text-success',
+  'needs-pick': 'bg-accent-soft text-accent-text',
+  pending: 'bg-elevated text-secondary',
+  error: 'bg-danger-soft text-danger'
 };
 
 const PILL_LABEL: Record<SceneStatus, string> = {
@@ -39,22 +39,22 @@ export function SceneCard({ scene, onStatus, onManualSearch, onSimilar, onRestor
   return (
     <article
       id={`scene-${scene.id}`}
-      className={`scroll-mt-24 rounded-xl border border-gray-200 bg-gray-50 shadow-sm ${compact ? 'p-2' : 'p-4'}`}
+      className={`scroll-mt-24 rounded-card border border-subtle bg-inset shadow-card ${compact ? 'p-2' : 'p-4'}`}
     >
       <header className="mb-2 flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
-          <h3 className="text-sm font-bold text-gray-800">Scene {scene.index + 1}</h3>
-          <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${PILL[status]}`}>
+          <h3 className="text-sm font-bold text-primary">Scene {scene.index + 1}</h3>
+          <span className={`rounded-pill px-2 py-0.5 text-[11px] font-semibold ${PILL[status]}`}>
             {PILL_LABEL[status]}
           </span>
         </div>
-        <span className="text-[11px] text-gray-400">
+        <span className="text-[11px] text-tertiary">
           chars {scene.start_char}–{scene.end_char}
         </span>
       </header>
-      <p className={`mb-2 leading-relaxed text-gray-700 ${compact ? 'line-clamp-2 text-[13px]' : 'text-sm'}`}>{scene.narration}</p>
+      <p className={`mb-2 leading-relaxed text-primary ${compact ? 'line-clamp-2 text-[13px]' : 'text-sm'}`}>{scene.narration}</p>
       {!compact && scene.queries.length > 0 && (
-        <p className="mb-2 truncate text-[11px] text-gray-400" title={scene.queries.join(' · ')}>
+        <p className="mb-2 truncate text-[11px] text-tertiary" title={scene.queries.join(' · ')}>
           queries: {scene.queries.join(' · ')}
         </p>
       )}
@@ -69,18 +69,18 @@ export function SceneCard({ scene, onStatus, onManualSearch, onSimilar, onRestor
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder="Manual search across all providers…"
-          className="flex-1 rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:border-blue-500 focus:outline-none"
+          className="flex-1 rounded-control border border-subtle px-3 py-1.5 text-sm focus:border-accent focus:outline-none"
         />
         <button
           type="submit"
           disabled={searching || !q.trim()}
-          className="rounded-lg bg-gray-900 px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-40"
+          className="rounded-control bg-accent px-3 py-1.5 text-sm font-semibold text-primary disabled:opacity-40"
         >
           {searching ? '…' : 'Search'}
         </button>
       </form>
       {visible.length === 0 ? (
-        <p className="rounded-lg bg-white p-4 text-center text-sm text-gray-500">
+        <p className="rounded-control bg-surface p-4 text-center text-sm text-secondary">
           No media found — try manual search
         </p>
       ) : (
@@ -102,7 +102,7 @@ export function SceneCard({ scene, onStatus, onManualSearch, onSimilar, onRestor
         <div className="mt-2">
           <button
             onClick={() => setShowRejected((v) => !v)}
-            className="text-[11px] font-semibold text-gray-400 hover:text-gray-600"
+            className="text-[11px] font-semibold text-tertiary hover:text-primary"
           >
             {showRejected ? '▾' : '▸'} Rejected ({rejected.length})
           </button>

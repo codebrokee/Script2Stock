@@ -7,7 +7,16 @@ Local-first tool. Backend on `:8000`, frontend on `:5173`. No paid services, no 
 - Python 3.11+
 - Node 18+
 
-## Setup
+## Quick start (Windows)
+
+Double-click **`start-app.bat`** in the project root. It checks whether the
+backend (`:8000`) and frontend (`:5173`) are already listening, starts
+whatever is missing (backend first, then frontend), and opens the app in your
+browser. Each server runs in its own window — close the window (or Ctrl+C) to
+stop it. Individual starters (`start-backend.bat`, `start-frontend.bat`) are
+also available.
+
+## Manual setup
 
 ### 1. Backend
 

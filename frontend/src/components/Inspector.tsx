@@ -20,25 +20,25 @@ export function LicensePanel({ asset }: { asset: MediaAsset }): React.ReactEleme
   }
 
   return (
-    <div className="rounded-lg bg-gray-50 p-3 text-xs">
+    <div className="rounded-control bg-inset p-3 text-xs">
       <div className="mb-1.5 flex items-center gap-2">
         <LicenseBadge license={asset.license} />
-        <span className="font-semibold text-gray-700">{asset.license || 'unknown'}</span>
+        <span className="font-semibold text-primary">{asset.license || 'unknown'}</span>
       </div>
-      <dl className="space-y-1 text-gray-600">
+      <dl className="space-y-1 text-secondary">
         <div className="flex gap-2">
-          <dt className="w-24 shrink-0 text-gray-400">Creator</dt>
+          <dt className="w-24 shrink-0 text-tertiary">Creator</dt>
           <dd className="truncate">{asset.creator || '—'}</dd>
         </div>
         <div className="flex gap-2">
-          <dt className="w-24 shrink-0 text-gray-400">Attribution</dt>
+          <dt className="w-24 shrink-0 text-tertiary">Attribution</dt>
           <dd>{asset.attribution_required ? 'Required' : 'Not required'}</dd>
         </div>
       </dl>
       <div className="mt-2 flex gap-2">
         <button
           onClick={() => void copyAttribution()}
-          className="flex-1 rounded-lg bg-gray-900 px-2 py-1.5 font-semibold text-white hover:bg-gray-700"
+          className="flex-1 rounded-control bg-accent px-2 py-1.5 font-semibold text-primary hover:bg-accent-hover"
         >
           {copied ? 'Copied ✓' : 'Copy attribution'}
         </button>
@@ -47,14 +47,14 @@ export function LicensePanel({ asset }: { asset: MediaAsset }): React.ReactEleme
             href={asset.url}
             target="_blank"
             rel="noreferrer"
-            className="flex-1 rounded-lg bg-accent-soft px-2 py-1.5 text-center font-semibold text-accent-strong hover:bg-accent hover:text-white"
+            className="flex-1 rounded-control bg-accent-soft px-2 py-1.5 text-center font-semibold text-accent-text hover:bg-accent hover:text-primary"
           >
             Open source page ↗
           </a>
         )}
       </div>
       {asset.license_url && (
-        <a href={asset.license_url} target="_blank" rel="noreferrer" className="mt-1 block truncate text-accent-strong hover:underline">
+        <a href={asset.license_url} target="_blank" rel="noreferrer" className="mt-1 block truncate text-accent-text hover:underline">
           {asset.license_url}
         </a>
       )}
@@ -80,47 +80,48 @@ export function Inspector({ asset, sceneIndex, onClose, onUse, onReject, onSimil
 
   return (
     <div className="fixed inset-0 z-40" role="dialog" aria-label="Media inspector">
+      {/* [overlay] dim backdrop; pure black keeps photos legible behind drawers */}
       <div className="absolute inset-0 bg-black/20" onClick={onClose} />
-      <aside className="absolute bottom-0 right-0 top-0 flex w-80 max-w-[90vw] flex-col bg-white shadow-xl">
+      <aside className="absolute bottom-0 right-0 top-0 flex w-80 max-w-[90vw] flex-col bg-surface shadow-lift">
         <div className="flex items-center justify-between border-b px-4 py-3">
-          <h2 className="truncate text-sm font-bold text-gray-800">
+          <h2 className="truncate text-sm font-bold text-primary">
             Scene {sceneIndex + 1} · {asset.provider}
           </h2>
           <button
             onClick={onClose}
             aria-label="Close inspector (Esc)"
-            className="rounded px-2 py-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+            className="rounded-control px-2 py-1 text-tertiary hover:bg-elevated hover:text-primary"
           >
             ✕
           </button>
         </div>
         <div className="flex-1 space-y-3 overflow-y-auto p-4">
-          <div className="overflow-hidden rounded-xl bg-gray-100">
+          <div className="overflow-hidden rounded-card bg-elevated">
             {thumb ? (
               <img src={thumb} alt={asset.title} className="max-h-64 w-full object-contain" />
             ) : (
-              <div className="flex h-40 items-center justify-center text-xs text-gray-400">no preview</div>
+              <div className="flex h-40 items-center justify-center text-xs text-tertiary">no preview</div>
             )}
           </div>
           <div>
-            <h3 className="text-sm font-bold text-gray-800">{asset.title || `${asset.provider} ${asset.provider_id}`}</h3>
-            {asset.description && <p className="mt-1 text-xs leading-relaxed text-gray-500">{asset.description}</p>}
+            <h3 className="text-sm font-bold text-primary">{asset.title || `${asset.provider} ${asset.provider_id}`}</h3>
+            {asset.description && <p className="mt-1 text-xs leading-relaxed text-secondary">{asset.description}</p>}
           </div>
           <dl className="grid grid-cols-2 gap-1.5 text-xs">
-            <div className="rounded bg-gray-50 px-2 py-1.5">
-              <dt className="text-gray-400">Dimensions</dt>
+            <div className="rounded-control bg-inset px-2 py-1.5">
+              <dt className="text-tertiary">Dimensions</dt>
               <dd className="font-semibold">{asset.width > 0 ? `${asset.width}×${asset.height}` : '—'}</dd>
             </div>
-            <div className="rounded bg-gray-50 px-2 py-1.5">
-              <dt className="text-gray-400">Orientation{ratio ? ` (${ratio})` : ''}</dt>
+            <div className="rounded-control bg-inset px-2 py-1.5">
+              <dt className="text-tertiary">Orientation{ratio ? ` (${ratio})` : ''}</dt>
               <dd className="font-semibold">{orientation}</dd>
             </div>
-            <div className="rounded bg-gray-50 px-2 py-1.5">
-              <dt className="text-gray-400">Type</dt>
+            <div className="rounded-control bg-inset px-2 py-1.5">
+              <dt className="text-tertiary">Type</dt>
               <dd className="font-semibold">{asset.media_type}</dd>
             </div>
-            <div className="rounded bg-gray-50 px-2 py-1.5">
-              <dt className="text-gray-400">Duration</dt>
+            <div className="rounded-control bg-inset px-2 py-1.5">
+              <dt className="text-tertiary">Duration</dt>
               <dd className="font-semibold">{dur || '—'}</dd>
             </div>
           </dl>
@@ -129,20 +130,20 @@ export function Inspector({ asset, sceneIndex, onClose, onUse, onReject, onSimil
         <div className="flex gap-2 border-t p-3">
           <button
             onClick={onUse}
-            className="flex-1 rounded-lg bg-green-600 px-2 py-1.5 text-xs font-semibold text-white hover:bg-green-700"
+            className="flex-1 rounded-control bg-success px-2 py-1.5 text-xs font-semibold text-primary hover:brightness-110"
           >
             Use ⏎
           </button>
           <button
             onClick={onReject}
-            className="flex-1 rounded-lg bg-red-100 px-2 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-200"
+            className="flex-1 rounded-control bg-danger-soft px-2 py-1.5 text-xs font-semibold text-danger hover:brightness-125"
           >
             Reject (X)
           </button>
           <button
             onClick={onSimilar}
             title="Find Similar (S)"
-            className="rounded-lg bg-gray-100 px-3 py-1.5 text-xs hover:bg-gray-200"
+            className="rounded-control bg-elevated px-3 py-1.5 text-xs hover:bg-border-subtle"
           >
             ✨
           </button>
