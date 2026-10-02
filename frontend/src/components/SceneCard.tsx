@@ -24,9 +24,10 @@ interface Props {
   onSimilar: (scene: Scene, asset: MediaAsset) => void;
   onRestore?: (sceneId: number, asset: MediaAsset) => void;
   searching: boolean;
+  compact?: boolean;
 }
 
-export function SceneCard({ scene, onStatus, onManualSearch, onSimilar, onRestore, searching }: Props): React.ReactElement {
+export function SceneCard({ scene, onStatus, onManualSearch, onSimilar, onRestore, searching, compact }: Props): React.ReactElement {
   const [q, setQ] = useState<string>('');
   const [showRejected, setShowRejected] = useState(false);
   const status = sceneStatus(scene);
@@ -34,7 +35,10 @@ export function SceneCard({ scene, onStatus, onManualSearch, onSimilar, onRestor
   const rejected = scene.media.filter((m) => m.status === 'rejected');
 
   return (
-    <article id={`scene-${scene.id}`} className="scroll-mt-24 rounded-xl border border-gray-200 bg-gray-50 p-4 shadow-sm">
+    <article
+      id={`scene-${scene.id}`}
+      className={`scroll-mt-24 rounded-xl border border-gray-200 bg-gray-50 shadow-sm ${compact ? 'p-2' : 'p-4'}`}
+    >
       <header className="mb-2 flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <h3 className="text-sm font-bold text-gray-800">Scene {scene.index + 1}</h3>
@@ -46,8 +50,8 @@ export function SceneCard({ scene, onStatus, onManualSearch, onSimilar, onRestor
           chars {scene.start_char}–{scene.end_char}
         </span>
       </header>
-      <p className="mb-2 text-sm leading-relaxed text-gray-700">{scene.narration}</p>
-      {scene.queries.length > 0 && (
+      <p className={`mb-2 leading-relaxed text-gray-700 ${compact ? 'line-clamp-2 text-[13px]' : 'text-sm'}`}>{scene.narration}</p>
+      {!compact && scene.queries.length > 0 && (
         <p className="mb-2 truncate text-[11px] text-gray-400" title={scene.queries.join(' · ')}>
           queries: {scene.queries.join(' · ')}
         </p>

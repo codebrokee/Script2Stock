@@ -15,6 +15,7 @@ import {
 } from './api';
 import { IssuesDrawer } from './components/IssuesDrawer';
 import { ProgressRail } from './components/ProgressRail';
+import { ContextRail, type RailMode, type SavedSort } from './components/ContextRail';
 import { SceneCard } from './components/SceneCard';
 import { StatusBar } from './components/StatusBar';
 import { Toast } from './components/Toasts';
@@ -39,6 +40,17 @@ export default function App(): React.ReactElement {
   const [filter, setFilter] = useState<SceneFilter>('all');
   const [issuesOpen, setIssuesOpen] = useState(false);
   const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
+  const [railMode, setRailMode] = useState<RailMode>('editor');
+  const [compactAll, setCompactAll] = useState(false);
+  const [savedQuery, setSavedQuery] = useState('');
+  const [savedSort, setSavedSort] = useState<SavedSort>('newest');
+  const [railCollapsed, setRailCollapsed] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('s2s-rail-collapsed') === '1';
+    } catch {
+      return false;
+    }
+  });
   const [providers, setProviders] = useState<{ name: string; configured: boolean }[]>([]);
 
   useEffect(() => {
@@ -196,6 +208,28 @@ export default function App(): React.ReactElement {
     }));
   }
 
+  function toggleRail(): void {
+    setRailCollapsed((v) => {
+      const next = !v;
+      try {
+        localStorage.setItem('s2s-rail-collapsed', next ? '1' : '0');
+      } catch {
+        /* private mode */
+      }
+      return next;
+    });
+  }
+
+  function jumpToScene(sceneId: number): void {
+    document.getElementById(`scene-${sceneId}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  // When a board arrives, switch the rail to the board navigator (once per board).
+  const boardId = board?.id ?? null;
+  useEffect(() => {
+    if (boardId !== null) setRailMode((m) => (m === 'editor' ? 'board' : m));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [boardId]);
   function patchScene(sceneId: number, fn: (s: Scene) => Scene): void {
     setBoard((b) => (b ? { ...b, scenes: b.scenes.map((s) => (s.id === sceneId ? fn(s) : s)) } : b));
   }
@@ -300,64 +334,49 @@ export default function App(): React.ReactElement {
         </div>
       ) : null}
 
-      <main className="mx-auto grid max-w-7xl gap-4 p-4 lg:grid-cols-[340px_1fr]">
-        <aside className="h-fit rounded-xl border bg-white p-4 shadow-sm lg:sticky lg:top-16">
-          <label className="mb-1 block text-xs font-semibold uppercase text-gray-500">Title</label>
-          <input
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            className="mb-3 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+      <main className="mx-auto grid max-w-7xl gap-4 p-4 lg:grid-cols-[auto_1fr]">
+        <aside className="h-fit lg:sticky lg:top-16">
+          <ContextRail
+            collapsed={railCollapsed}
+            onToggleCollapse={toggleRail}
+            mode={railMode}
+            onMode={setRailMode}
+            title={title}
+            text={text}
+            onTitle={setTitle}
+            onText={setText}
+            generateDisabled={jobActive || starting || !text.trim()}
+            generateLabel={
+              starting ? 'Starting…' : jobActive && job ? (job.paused ? 'Paused…' : 'Generating…') : 'Generate Scenes'
+            }
+            onGenerate={() => void handleGenerate()}
+            scenes={board?.scenes ?? []}
+            filter={filter}
+            onFilter={setFilter}
+            compactAll={compactAll}
+            onCompactAll={setCompactAll}
+            onJumpScene={jumpToScene}
+            saved={saved}
+            savedQuery={savedQuery}
+            onSavedQuery={setSavedQuery}
+            savedSort={savedSort}
+            onSavedSort={setSavedSort}
+            onLoadSaved={(id) => void handleLoadSaved(id)}
           />
-          <label className="mb-1 block text-xs font-semibold uppercase text-gray-500">YouTube script</label>
-          <textarea
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            rows={16}
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm leading-relaxed focus:border-blue-500 focus:outline-none"
-          />
-          <button
-            onClick={() => void handleGenerate()}
-            disabled={jobActive || starting || !text.trim()}
-            className="mt-3 w-full rounded-lg bg-blue-600 px-3 py-2 text-sm font-bold text-white disabled:opacity-40 hover:bg-blue-700"
-          >
-            {starting ? 'Starting…' : jobActive && job ? (job.paused ? 'Paused…' : 'Generating…') : 'Generate Scenes'}
-          </button>
-          <p className="mt-2 text-[11px] text-gray-400">
-            Scenes split on sentences (1–3 per scene, ~15–40 words). Paragraph breaks force boundaries.
-          </p>
-          <div className="mt-4 border-t pt-3">
-            <h3 className="mb-2 text-xs font-bold uppercase tracking-wide text-gray-500">Saved storyboards</h3>
-            {saved.length === 0 ? (
-              <p className="text-xs text-gray-400">Nothing saved yet — use “Save Storyboard” up top.</p>
-            ) : (
-              <ul className="max-h-64 space-y-1.5 overflow-y-auto">
-                {saved.map((s) => (
-                  <li
-                    key={s.id}
-                    className="flex items-center justify-between gap-2 rounded-lg bg-gray-50 px-2.5 py-1.5 text-xs"
-                  >
-                    <span className="min-w-0">
-                      <span className="block truncate font-semibold text-gray-700" title={s.title}>
-                        {s.title}
-                      </span>
-                      <span className="text-[11px] text-gray-400">
-                        {s.scene_count} scenes · {new Date(s.created_at).toLocaleString()}
-                      </span>
-                    </span>
-                    <button
-                      onClick={() => void handleLoadSaved(s.id)}
-                      className="shrink-0 rounded bg-blue-100 px-2 py-1 font-semibold text-blue-700 hover:bg-blue-200"
-                    >
-                      Load
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
         </aside>
 
         <section className="space-y-4">
+          {filter !== 'all' && board && (
+            <div className="flex items-center gap-2 rounded-xl border border-accent/30 bg-accent-soft px-3 py-1.5 text-xs text-accent-strong">
+              <span>
+                Filter: <b>{filter}</b> — showing {visibleScenes.length}/{board.scenes.length} scenes
+              </span>
+              <span className="flex-1" />
+              <button onClick={() => setFilter('all')} className="font-semibold hover:underline">
+                Clear ✕
+              </button>
+            </div>
+          )}
           {!board && !job && (
             <div className="rounded-xl border border-dashed bg-white p-10 text-center text-sm text-gray-400">
               Paste a script on the left and click <b>Generate Scenes</b>.
@@ -385,6 +404,7 @@ export default function App(): React.ReactElement {
               onManualSearch={handleManualSearch}
               onSimilar={handleSimilar}
               onRestore={handleRestore}
+              compact={compactAll}
             />
           ))}
           {hiddenCount > 0 && (
