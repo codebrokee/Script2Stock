@@ -1,0 +1,12 @@
+fastapi>=0.109,<0.120
+uvicorn[standard]>=0.25
+sqlmodel>=0.0.16
+httpx>=0.26
+pydantic>=2.5
+pydantic-settings>=2.1
+spacy>=3.7
+python-dotenv>=1.0
+pytest>=8.0
+pytest-asyncio>=0.23
+respx>=0.21
+anyio>=4.0
