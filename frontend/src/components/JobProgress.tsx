@@ -12,6 +12,36 @@ interface Props {
 
 export function JobProgressCard({ job, onPause, onResume, onCancel, onPartial, onDismiss }: Props): React.ReactElement {
   const active = job.status === 'queued' || job.status === 'running';
+
+  if (!active) {
+    // Terminal states collapse to a single summary line.
+    const icon = job.status === 'done' ? '✅' : job.status === 'error' ? '❌' : '⏹';
+    return (
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm shadow-sm">
+        <span className="font-bold text-gray-800">
+          {icon} {job.stage}
+        </span>
+        <span className="text-xs text-gray-400">
+          {job.done_scenes}/{job.total_scenes} scenes · {job.media_found} assets · {job.elapsed.toFixed(0)}s
+        </span>
+        <span className="flex-1" />
+        {job.status !== 'done' && job.script_id !== null && (
+          <button
+            onClick={onPartial}
+            className="rounded-lg bg-blue-600 px-3 py-1 text-xs font-semibold text-white hover:bg-blue-700"
+          >
+            View partial storyboard
+          </button>
+        )}
+        <button
+          onClick={onDismiss}
+          className="rounded-lg bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-600 hover:bg-gray-200"
+        >
+          Dismiss
+        </button>
+      </div>
+    );
+  }
   const pct =
     job.total_scenes > 0 ? Math.round((job.done_scenes / job.total_scenes) * 100) : job.status === 'running' ? 5 : 0;
 

@@ -162,6 +162,14 @@ export default function App(): React.ReactElement {
     }
   }
 
+  function handleRestore(sceneId: number, asset: MediaAsset): void {
+    // No backend endpoint resets status to candidate, so restore is session-local.
+    patchScene(sceneId, (s) => ({
+      ...s,
+      media: s.media.map((m) => (m.id === asset.id ? { ...m, status: 'candidate' } : m))
+    }));
+  }
+
   function patchScene(sceneId: number, fn: (s: Scene) => Scene): void {
     setBoard((b) => (b ? { ...b, scenes: b.scenes.map((s) => (s.id === sceneId ? fn(s) : s)) } : b));
   }
@@ -382,6 +390,7 @@ export default function App(): React.ReactElement {
               onStatus={(sid, a, act) => void handleStatus(sid, a, act)}
               onManualSearch={handleManualSearch}
               onSimilar={handleSimilar}
+              onRestore={handleRestore}
             />
           ))}
           {hiddenCount > 0 && (
