@@ -15,12 +15,21 @@ import {
 } from './api';
 import { IssuesDrawer } from './components/IssuesDrawer';
 import { ProgressRail } from './components/ProgressRail';
-import { ContextRail, type RailMode, type SavedSort } from './components/ContextRail';
+import { CommandBar, type ViewMode } from './components/CommandBar';
+import { CommandPalette, type PaletteAction } from './components/CommandPalette';
+import { ContextRail, type SavedSort } from './components/ContextRail';
+import { EditorPanel } from './components/EditorPanel';
+import { LibraryGrid } from './components/LibraryGrid';
 import { SceneCard } from './components/SceneCard';
 import { StatusBar } from './components/StatusBar';
 import { Toast } from './components/Toasts';
 import type { JobProgress, MediaAsset, SavedStoryboardMeta, Scene, Storyboard } from './types';
 import { boardCounts, collectIssues, matchFilter, type Issue, type SceneFilter } from './lib/board';
+
+function viewFromHash(): ViewMode {
+  const h = window.location.hash.replace('#', '');
+  return h === 'storyboard' || h === 'library' ? h : 'editor';
+}
 
 const SAMPLE = `Artificial intelligence is transforming modern cities. Robots and neural networks power new services every day.\n\nThe ocean remains mysterious and vast. Coral reefs shelter thousands of colorful fish beneath the waves.\n\nTravel opens new horizons. Airplanes cross continents while travelers discover food, culture, and adventure.`;
 
@@ -40,7 +49,9 @@ export default function App(): React.ReactElement {
   const [filter, setFilter] = useState<SceneFilter>('all');
   const [issuesOpen, setIssuesOpen] = useState(false);
   const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
-  const [railMode, setRailMode] = useState<RailMode>('editor');
+  const [viewMode, setViewMode] = useState<ViewMode>(() => viewFromHash());
+  const [dirty, setDirty] = useState(false);
+  const [paletteOpen, setPaletteOpen] = useState(false);
   const [compactAll, setCompactAll] = useState(false);
   const [savedQuery, setSavedQuery] = useState('');
   const [savedSort, setSavedSort] = useState<SavedSort>('newest');
@@ -100,6 +111,8 @@ export default function App(): React.ReactElement {
         const sb = await getStoryboard(j.script_id);
         setBoard(sb);
         setProviders(sb.providers ?? []);
+        setDirty(false);
+        setViewMode('storyboard');
         setNotice(`Storyboard ready — ${sb.scenes.length} scenes, ${j.media_found} assets.`);
         setJob(null);
         return;
@@ -129,6 +142,7 @@ export default function App(): React.ReactElement {
     setStarting(true); // disable the button synchronously, before the first await
     setError('');
     setNotice('');
+    setDirty(false);
     setBackendDown(false);
     setJobGone(false);
     failCount.current = 0;
@@ -188,6 +202,8 @@ export default function App(): React.ReactElement {
       const sb = await getStoryboard(job.script_id);
       setBoard(sb);
       setProviders(sb.providers ?? []);
+      setDirty(false);
+      setViewMode('storyboard');
       if (job.status === 'cancelled' || job.status === 'error') {
         setJob(null); // terminal — nothing left to track
       } else {
@@ -224,14 +240,32 @@ export default function App(): React.ReactElement {
     document.getElementById(`scene-${sceneId}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
-  // When a board arrives, switch the rail to the board navigator (once per board).
-  const boardId = board?.id ?? null;
+  // viewMode <-> location.hash (refresh preserves the view).
   useEffect(() => {
-    if (boardId !== null) setRailMode((m) => (m === 'editor' ? 'board' : m));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [boardId]);
+    if (window.location.hash !== `#${viewMode}`) window.location.hash = viewMode;
+  }, [viewMode]);
+
+  useEffect(() => {
+    const onHash = () => setViewMode(viewFromHash());
+    window.addEventListener('hashchange', onHash);
+    return () => window.removeEventListener('hashchange', onHash);
+  }, []);
+
+  // Global ⌘K / Ctrl+K toggles the command palette.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setPaletteOpen((v) => !v);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
+
   function patchScene(sceneId: number, fn: (s: Scene) => Scene): void {
     setBoard((b) => (b ? { ...b, scenes: b.scenes.map((s) => (s.id === sceneId ? fn(s) : s)) } : b));
+    setDirty(true);
   }
 
   async function handleStatus(sceneId: number, asset: MediaAsset, action: 'select' | 'reject'): Promise<void> {
@@ -269,6 +303,7 @@ export default function App(): React.ReactElement {
       await saveStoryboard(board.id, board);
       setSaved(await listStoryboards().then((s) => s.storyboards));
       setLastSavedAt(new Date().toISOString());
+      setDirty(false);
       setNotice(`Storyboard saved — see it under Saved storyboards below.`);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Save failed');
@@ -281,6 +316,8 @@ export default function App(): React.ReactElement {
       const { state } = await getSavedStoryboard(id);
       setBoard(state);
       setProviders(state.providers ?? []);
+      setDirty(false);
+      setViewMode('storyboard');
       setNotice(`Loaded saved storyboard “${state.title}”.`);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (e) {
@@ -298,29 +335,47 @@ export default function App(): React.ReactElement {
     URL.revokeObjectURL(a.href);
   }
 
+  const actions: PaletteAction[] = [
+    { id: 'go-editor', label: 'Go to Editor', run: () => setViewMode('editor') },
+    { id: 'go-board', label: 'Go to Storyboard', run: () => setViewMode('storyboard') },
+    { id: 'go-library', label: 'Go to Library', run: () => setViewMode('library') },
+    ...(!jobActive && !starting
+      ? [{ id: 'gen', label: 'Generate scenes', hint: 'from editor text', run: () => void handleGenerate() }]
+      : []),
+    ...(board
+      ? [
+          { id: 'save', label: 'Save storyboard', run: () => void handleSave() },
+          { id: 'export', label: 'Export JSON', run: () => handleExport() }
+        ]
+      : []),
+    ...(jobActive && job
+      ? [
+          ...(job.paused
+            ? [{ id: 'resume', label: 'Resume job', run: () => void handleResume() }]
+            : [{ id: 'pause', label: 'Pause job', run: () => void handlePause() }]),
+          { id: 'cancel', label: 'Cancel job', run: () => void handleCancel() }
+        ]
+      : []),
+    ...saved.slice(0, 6).map((s) => ({
+      id: `load-${s.id}`,
+      label: `Load “${s.title}”`,
+      hint: `${s.scene_count} scenes`,
+      run: () => void handleLoadSaved(s.id)
+    }))
+  ];
+
   return (
     <div className="min-h-screen bg-gray-100 pb-10 text-gray-900">
-      <header className="sticky top-0 z-10 flex items-center justify-between border-b bg-white px-4 py-3 shadow-sm">
-        <h1 className="text-lg font-extrabold tracking-tight">
-          🎬 Script<span className="text-blue-600">2</span>Stock
-        </h1>
-        <div className="flex gap-2">
-          <button
-            onClick={() => void handleSave()}
-            disabled={!board}
-            className="rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-40 hover:bg-blue-700"
-          >
-            Save Storyboard
-          </button>
-          <button
-            onClick={handleExport}
-            disabled={!board}
-            className="rounded-lg bg-gray-900 px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-40"
-          >
-            Export JSON
-          </button>
-        </div>
-      </header>
+      <CommandBar
+        view={viewMode}
+        onView={setViewMode}
+        dirty={dirty}
+        canSave={board !== null}
+        onSave={() => void handleSave()}
+        onExport={handleExport}
+        onPalette={() => setPaletteOpen(true)}
+      />
+      <CommandPalette open={paletteOpen} actions={actions} onClose={() => setPaletteOpen(false)} />
 
       {missing.length > 0 && (
         <div className="border-b border-yellow-200 bg-yellow-50 px-4 py-2 text-sm text-yellow-800">
@@ -339,8 +394,8 @@ export default function App(): React.ReactElement {
           <ContextRail
             collapsed={railCollapsed}
             onToggleCollapse={toggleRail}
-            mode={railMode}
-            onMode={setRailMode}
+            mode={viewMode === 'storyboard' ? 'board' : viewMode}
+            onMode={(m) => setViewMode(m === 'board' ? 'storyboard' : m)}
             title={title}
             text={text}
             onTitle={setTitle}
@@ -366,7 +421,42 @@ export default function App(): React.ReactElement {
         </aside>
 
         <section className="space-y-4">
-          {filter !== 'all' && board && (
+          {job && (
+            <ProgressRail
+              job={job}
+              offline={backendDown}
+              gone={jobGone}
+              onPause={() => void handlePause()}
+              onResume={() => void handleResume()}
+              onCancel={() => void handleCancel()}
+              onPartial={() => void handlePartialView()}
+              onRetry={() => void handleRetry()}
+              onDismiss={() => dismissJob()}
+            />
+          )}
+          {viewMode === 'editor' && (
+            <EditorPanel
+              title={title}
+              text={text}
+              onTitle={setTitle}
+              onText={setText}
+              generateDisabled={jobActive || starting || !text.trim()}
+              generateLabel={
+                starting
+                  ? 'Starting…'
+                  : jobActive && job
+                    ? job.paused
+                      ? 'Paused…'
+                      : 'Generating…'
+                    : 'Generate Scenes'
+              }
+              onGenerate={() => void handleGenerate()}
+              rows={20}
+            />
+          )}
+          {viewMode === 'storyboard' && (
+            <>
+              {filter !== 'all' && board && (
             <div className="flex items-center gap-2 rounded-xl border border-accent/30 bg-accent-soft px-3 py-1.5 text-xs text-accent-strong">
               <span>
                 Filter: <b>{filter}</b> — showing {visibleScenes.length}/{board.scenes.length} scenes
@@ -381,19 +471,6 @@ export default function App(): React.ReactElement {
             <div className="rounded-xl border border-dashed bg-white p-10 text-center text-sm text-gray-400">
               Paste a script on the left and click <b>Generate Scenes</b>.
             </div>
-          )}
-          {job && (
-            <ProgressRail
-              job={job}
-              offline={backendDown}
-              gone={jobGone}
-              onPause={() => void handlePause()}
-              onResume={() => void handleResume()}
-              onCancel={() => void handleCancel()}
-              onPartial={() => void handlePartialView()}
-              onRetry={() => void handleRetry()}
-              onDismiss={() => dismissJob()}
-            />
           )}
           {visibleScenes.map((s) => (
             <SceneCard
@@ -411,6 +488,11 @@ export default function App(): React.ReactElement {
             <div className="rounded-xl border border-dashed bg-white p-6 text-center text-sm text-gray-400">
               ⏳ {hiddenCount} more scene{hiddenCount === 1 ? '' : 's'} still generating…
             </div>
+          )}
+            </>
+          )}
+          {viewMode === 'library' && (
+            <LibraryGrid saved={saved} onOpen={(id) => void handleLoadSaved(id)} />
           )}
         </section>
       </main>

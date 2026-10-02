@@ -1,6 +1,7 @@
 import React from 'react';
 import type { SavedStoryboardMeta, Scene } from '../types';
 import { sceneStatus, type SceneFilter, type SceneStatus } from '../lib/board';
+import { EditorPanel } from './EditorPanel';
 
 export type RailMode = 'editor' | 'board' | 'library';
 export type SavedSort = 'newest' | 'oldest' | 'title';
@@ -116,31 +117,17 @@ export function ContextRail(props: Props): React.ReactElement {
 
 function EditorPane(p: Props): React.ReactElement {
   return (
-    <div>
-      <label className="mb-1 block text-xs font-semibold uppercase text-gray-500">Title</label>
-      <input
-        value={p.title}
-        onChange={(e) => p.onTitle(e.target.value)}
-        className="mb-3 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
-      />
-      <label className="mb-1 block text-xs font-semibold uppercase text-gray-500">YouTube script</label>
-      <textarea
-        value={p.text}
-        onChange={(e) => p.onText(e.target.value)}
-        rows={14}
-        className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm leading-relaxed focus:border-blue-500 focus:outline-none"
-      />
-      <button
-        onClick={p.onGenerate}
-        disabled={p.generateDisabled}
-        className="mt-3 w-full rounded-lg bg-blue-600 px-3 py-2 text-sm font-bold text-white disabled:opacity-40 hover:bg-blue-700"
-      >
-        {p.generateLabel}
-      </button>
-      <p className="mt-2 text-[11px] text-gray-400">
-        Scenes split on sentences (1–3 per scene, ~15–40 words). Paragraph breaks force boundaries.
-      </p>
-    </div>
+    <EditorPanel
+      title={p.title}
+      text={p.text}
+      onTitle={p.onTitle}
+      onText={p.onText}
+      generateDisabled={p.generateDisabled}
+      generateLabel={p.generateLabel}
+      onGenerate={p.onGenerate}
+      rows={14}
+      bare
+    />
   );
 }
 
