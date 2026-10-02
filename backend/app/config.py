@@ -23,6 +23,7 @@ class Settings(BaseSettings):
     # matching pipeline tuning
     EMBEDDING_MODEL: str = "all-MiniLM-L6-v2"
     SEMANTIC_WEIGHT: float = 0.6  # final = (1-w)*keyword + w*semantic
+    RRF_K: int = 60  # RRF smoothing constant; top-60 fused items get reranked
 
     @property
     def sqlite_path(self) -> Path:

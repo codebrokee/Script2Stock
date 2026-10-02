@@ -81,6 +81,17 @@ async def _cached_provider_search(
     return results
 
 
+def _to_asset(scene_id: int, n: NormalizedMedia) -> MediaAsset:
+    return MediaAsset(
+        scene_id=scene_id, provider=n.provider, provider_id=n.provider_id,
+        title=n.title, description=n.description, url=n.url,
+        download_url=n.download_url, thumbnail_url=n.thumbnail_url,
+        media_type=n.media_type, width=n.width, height=n.height,
+        duration=n.duration, license=n.license, license_url=n.license_url,
+        creator=n.creator, attribution_required=n.attribution_required,
+    )
+
+
 async def populate_media_for_scene(
     session: Session,
     scene: Scene,
@@ -92,34 +103,25 @@ async def populate_media_for_scene(
     rows = session.exec(select(SearchQuery).where(SearchQuery.scene_id == scene.id).order_by(SearchQuery.rank)).all()
     queries = [r.query for r in rows[:max_queries]] or [scene.narration[:80]]
     providers = get_providers()
-    normalized: list[NormalizedMedia] = []
+    grouped: dict[tuple[str, str], list[NormalizedMedia]] = {}
     async with httpx.AsyncClient(timeout=20, follow_redirects=True) as client:
         for qi, q in enumerate(queries):
             if is_cancelled and is_cancelled():
                 raise JobCancelled(f"cancelled during scene {scene.index}")
             if on_stage:
                 on_stage(f"query {qi + 1}/{len(queries)} — searching {len(providers)} providers")
-            tasks = [_cached_provider_search(session, p, q, client, per_query) for p in providers]
-            for coro in asyncio.as_completed(tasks):
-                try:
-                    normalized.extend(await coro)
-                except Exception:
+            results = await asyncio.gather(
+                *[_cached_provider_search(session, p, q, client, per_query) for p in providers],
+                return_exceptions=True,
+            )
+            for p, res in zip(providers, results):
+                if isinstance(res, Exception):
                     continue
-    # to MediaAsset rows (transient for ranking)
-    transient = [
-        MediaAsset(
-            scene_id=scene.id, provider=n.provider, provider_id=n.provider_id,
-            title=n.title, description=n.description, url=n.url,
-            download_url=n.download_url, thumbnail_url=n.thumbnail_url,
-            media_type=n.media_type, width=n.width, height=n.height,
-            duration=n.duration, license=n.license, license_url=n.license_url,
-            creator=n.creator, attribution_required=n.attribution_required,
-        )
-        for n in normalized
-    ]
+                grouped.setdefault((q, p.name), []).extend(res)
+    lists = [(q, [_to_asset(scene.id, n) for n in items]) for (q, _p), items in grouped.items() if items]
     if on_stage:
-        on_stage(f"ranking {len(transient)} candidates")
-    ranked = matching.rank_scene(scene.narration, transient, concepts=queries, session=session, top_n=12)
+        on_stage(f"fusing {len(lists)} ranked lists")
+    ranked = matching.fuse_and_rerank(scene.narration, queries, lists, session=session, top_n=12)
     # cache thumbnails to disk (best-effort)
     for i, a in enumerate(ranked):
         if is_cancelled and is_cancelled():
@@ -146,26 +148,18 @@ async def populate_media_for_scene(
 
 async def manual_search(session: Session, scene: Scene, q: str, per_page: int = 4) -> list[MediaAsset]:
     providers = get_providers()
-    normalized: list[NormalizedMedia] = []
+    grouped: dict[str, list[NormalizedMedia]] = {}
     async with httpx.AsyncClient(timeout=20, follow_redirects=True) as client:
-        tasks = [_cached_provider_search(session, p, q, client, per_page) for p in providers]
-        for coro in asyncio.as_completed(tasks):
-            try:
-                normalized.extend(await coro)
-            except Exception:
-                continue
-    transient = [
-        MediaAsset(
-            scene_id=scene.id, provider=n.provider, provider_id=n.provider_id,
-            title=n.title, description=n.description, url=n.url,
-            download_url=n.download_url, thumbnail_url=n.thumbnail_url,
-            media_type=n.media_type, width=n.width, height=n.height,
-            duration=n.duration, license=n.license, license_url=n.license_url,
-            creator=n.creator, attribution_required=n.attribution_required,
+        results = await asyncio.gather(
+            *[_cached_provider_search(session, p, q, client, per_page) for p in providers],
+            return_exceptions=True,
         )
-        for n in normalized
-    ]
-    ranked = matching.rank_scene(q + " " + scene.narration, transient, concepts=[q], session=session, top_n=12)
+        for p, res in zip(providers, results):
+            if isinstance(res, Exception):
+                continue
+            grouped.setdefault(p.name, []).extend(res)
+    lists = [(q, [_to_asset(scene.id, n) for n in items]) for _p, items in grouped.items() if items]
+    ranked = matching.fuse_and_rerank(q + " " + scene.narration, [q], lists, session=session, top_n=12)
     for i, a in enumerate(ranked):
         try:
             a.cached_thumbnail = await fetch_thumbnail(a.thumbnail_url, f"manual_{scene.id}_{i}")

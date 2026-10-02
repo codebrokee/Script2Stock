@@ -109,3 +109,103 @@ def test_concept_expansion_and_entities() -> None:
     assert concept_map.disambiguate("apple", "fruit orchard harvest") == "fruit orchard"
     assert concept_map.disambiguate("apple", "something entirely unrelated") is None
     assert concept_map.disambiguate("unknown-term", "context") is None
+
+
+def test_rrf_favors_repeated_items() -> None:
+    from app.core import fusion
+
+    fused = fusion.rrf_fuse([["a", "b", "c"], ["b", "a"], ["a"]], k=60)
+    order = [mid for mid, _ in fused]
+    assert order[0] == "a", fused  # in all 3 lists
+    assert set(order) == {"a", "b", "c"}
+    scores = dict(fused)
+    assert scores["a"] > scores["b"] > scores["c"]
+
+
+def test_fuse_and_rerank_end_to_end() -> None:
+    from app.core import pipeline
+
+    scene = E.load_scenes()[2]  # forest hike
+    cands = E.build_candidates(scene, 2)
+    goods, bads, neutrals = cands[:3], cands[3:5], cands[5:]
+    lists = [("q1 forest trail", goods + neutrals[:2]), ("q2 trees", goods[1:] + bads + neutrals[2:4])]
+    out = pipeline.fuse_and_rerank(scene["narration"], ["forest"], lists, top_n=5)
+    assert len(out) == 5
+    assert E.precision_at_k(out, scene) >= 0.6
+    assert E.hit_rate(out, scene) == 1.0
+
+
+def test_feedback_multipliers_boost_provenance() -> None:
+    from app.core import pipeline
+    from app.models import MediaAsset
+
+    def item(pid: str, title: str) -> MediaAsset:
+        return MediaAsset(scene_id=0, provider="t", provider_id=pid,
+                          title=title, description="")
+
+    x = item("X", "forest lake")
+    y = item("Y", "forest trail trees")
+    a, b, c = (item(pid, "desert dunes night") for pid in ("A", "B", "C"))
+    lists = [("loved query", [x, a]), ("other query", [y, b]), ("other query", [y, c])]
+    plain = pipeline.fuse_and_rerank("forest trail", [], lists, top_n=5)
+    boosted = pipeline.fuse_and_rerank(
+        "forest trail", [], lists, top_n=5, multipliers={"loved query": 5.0})
+    assert [m.provider_id for m in plain][0] == "Y"
+    assert [m.provider_id for m in boosted][0] == "X"
+
+
+def _junk_item(**kw: object) -> object:
+    from app.models import MediaAsset
+
+    base = dict(scene_id=0, provider="wikimedia", provider_id="j",
+                title="t", description="", width=1920, height=1080)
+    base.update(kw)  # type: ignore[typeddict-item]
+    return MediaAsset(**base)  # type: ignore[arg-type]
+
+
+def test_junk_patterns() -> None:
+    from app.core import junk
+
+    assert junk.is_junk(_junk_item(title="city skyline watermark"))
+    assert junk.is_junk(_junk_item(title="logo isolated on white background"))
+    assert junk.is_junk(_junk_item(title="dragon 3d render"))
+    assert junk.is_junk(_junk_item(title="flower clipart border"))
+    assert not junk.is_junk(_junk_item(title="forest trail trees"))
+    assert not junk.is_junk(_junk_item(title="cartoon network studio"))
+    assert not junk.is_junk(_junk_item(title="white House lawn"))
+
+
+def test_provider_cleanup_rules() -> None:
+    from app.core import junk
+
+    assert not junk.provider_cleanup(_junk_item(download_url="https://x/y.svg"), "wikimedia")
+    assert not junk.provider_cleanup(_junk_item(width=400, height=300), "wikimedia")
+    assert junk.provider_cleanup(_junk_item(width=800, height=600), "wikimedia")
+    assert junk.provider_cleanup(_junk_item(width=0, height=0), "wikimedia")  # unknown size kept
+    assert not junk.provider_cleanup(_junk_item(width=720, height=1280), "pexels")
+    assert junk.provider_cleanup(_junk_item(width=1280, height=720), "pexels")
+    assert not junk.provider_cleanup(_junk_item(title="free watermark photo"), "pexels")
+    assert junk.provider_cleanup(_junk_item(title="clean landscape"), "other")
+
+
+def test_dedup_key_strips_params() -> None:
+    from app.core import junk
+
+    a = _junk_item(download_url="https://cdn.example.com/f.jpg?x=1")
+    b = _junk_item(download_url="https://cdn.example.com/f.jpg?x=2")
+    assert junk.dedup_key(a) == junk.dedup_key(b) == "https://cdn.example.com/f.jpg"
+    c = _junk_item(download_url="")
+    assert junk.dedup_key(c) == "wikimedia:j"
+
+
+def test_fusion_drops_junk_and_merges_dupes() -> None:
+    from app.core import pipeline
+
+    scene = E.load_scenes()[2]
+    cands = E.build_candidates(scene, 2)
+    lists = [("q1", cands)]
+    out = pipeline.fuse_and_rerank(scene["narration"], [], lists, top_n=10)
+    titles = " | ".join(m.title for m in out)
+    assert "watermark" not in titles and "clipart" not in titles
+    urls = [m.download_url.split("?")[0] for m in out]
+    assert len(urls) == len(set(urls)), "param-permuted dupes must merge"
