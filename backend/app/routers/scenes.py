@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlmodel import Session, select
 
 from ..database import get_session
+from ..core import feedback
 from ..models import MediaAsset, Scene
 from ..services import manual_search, scene_to_read
 
@@ -44,6 +45,7 @@ def select_media(scene_id: int, asset_id: int, session: Session = Depends(get_se
     asset.status = "selected"
     session.add(asset)
     session.commit()
+    feedback.record_scene_feedback(session, scene.id, asset.id, "select")
     session.refresh(asset)
     return {"ok": True, "asset": asset.model_dump()}
 
@@ -57,5 +59,6 @@ def reject_media(scene_id: int, asset_id: int, session: Session = Depends(get_se
     asset.status = "rejected"
     session.add(asset)
     session.commit()
+    feedback.record_scene_feedback(session, scene.id, asset.id, "reject")
     session.refresh(asset)
     return {"ok": True, "asset": asset.model_dump()}

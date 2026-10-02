@@ -1,5 +1,20 @@
 # Script2Stock — YouTube scripts → storyboards with free stock media
 
+## Matching pipeline (backend/app/core/)
+
+Script-to-media matching runs in layers, measured by `backend/tests/run_eval.py`
+against 20 golden scenes (`tests/golden/scenes.json`, results in `results.csv`):
+
+1. Shaped queries (4-8/scene) + concept/entity expansion (`concept_map.py`)
+2. Semantic rerank: 0.4 keyword + 0.6 MiniLM cosine, SQLite embedding cache
+3. RRF fusion over per-(query, provider) lists, top-60 reranked
+4. Junk filtering (watermarks, vectors, portraits, param-dupe merge)
+5. Storyboard diversity (tag penalty, video ratio) applied per job
+6. Feedback loop: select/reject reweights queries (0.5-2.0) on re-search
+
+Needs only `sentence-transformers` (CPU torch is fine); everything degrades
+to keyword-only if embeddings are unavailable.
+
 Local-first tool. Backend on `:8000`, frontend on `:5173`. No paid services, no cloud.
 
 ## Prerequisites

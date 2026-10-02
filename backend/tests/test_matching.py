@@ -264,3 +264,78 @@ def test_diversity_never_regresses_golden() -> None:
     after = diversity.diverse_rank(per_scene)
     tops_after = [diversity.coarse_tag(s[0]) for s in after]
     assert E.diversity_score(tops_after) >= E.diversity_score(tops_before)
+
+
+def _seed_script(session: object) -> object:
+    from app.models import Scene, Script, SearchQuery
+
+    script = Script(title="T", text="forest trail trees and city night")
+    session.add(script)
+    session.commit()
+    session.refresh(script)
+    s1 = Scene(script_id=script.id, index=0, narration="forest trail", start_char=0, end_char=5)
+    session.add(s1)
+    session.commit()
+    session.refresh(s1)
+    session.add(SearchQuery(scene_id=s1.id, query="forest trail", rank=0))
+    session.add(SearchQuery(scene_id=s1.id, query="city night", rank=1))
+    session.commit()
+    return script
+
+
+def test_reweight_math_and_bounds(session) -> None:
+    from app.core import feedback
+
+    script = _seed_script(session)
+    assert feedback.reweight_queries(session, script.id) == {}
+    feedback.record_feedback(session, 1, 1, "select", "forest trail")
+    assert feedback.reweight_queries(session, script.id) == {"forest trail": 1.5}
+    for _ in range(5):
+        feedback.record_feedback(session, 1, 1, "select", "forest trail")
+    assert feedback.reweight_queries(session, script.id)["forest trail"] == 2.0
+    feedback.record_feedback(session, 1, 2, "reject", "city night")
+    assert feedback.reweight_queries(session, script.id)["city night"] == 0.75
+    for _ in range(5):
+        feedback.record_feedback(session, 1, 2, "reject", "city night")
+    mults = feedback.reweight_queries(session, script.id)
+    assert mults["city night"] == 0.5
+    assert all(0.5 <= v <= 2.0 for v in mults.values())
+
+
+def test_select_endpoint_records_feedback(client, session) -> None:
+    from app.core import feedback
+    from app.models import MediaAsset, Scene
+    from sqlmodel import select
+
+    script = _seed_script(session)
+    scene = session.exec(select(Scene)).first()
+    asset = MediaAsset(scene_id=scene.id, provider="t", provider_id="a",
+                       title="forest trail", media_type="image")
+    session.add(asset)
+    session.commit()
+    session.refresh(asset)
+    r = client.post(f"/api/scenes/{scene.id}/media/{asset.id}/select")
+    assert r.status_code == 200
+    mults = feedback.reweight_queries(session, script.id)
+    assert mults.get("forest trail") == 1.5, mults
+
+
+def test_reweighted_research_boosts_liked_query(session) -> None:
+    from app.core import feedback, pipeline
+    from app.models import MediaAsset
+
+    script = _seed_script(session)
+    feedback.record_feedback(session, 1, 1, "select", "loved query")
+    feedback.record_feedback(session, 1, 1, "select", "loved query")
+    mults = feedback.reweight_queries(session, script.id)
+    assert mults["loved query"] == 2.0
+
+    def item(pid: str, title: str) -> MediaAsset:
+        return MediaAsset(scene_id=0, provider="t", provider_id=pid, title=title, description="")
+
+    x = item("X", "forest lake")
+    y = item("Y", "forest trail trees")
+    filler = [item(f"F{i}", "desert dunes night") for i in range(3)]
+    lists = [("loved query", [x] + filler[:1]), ("other query", [y] + filler[1:])]
+    boosted = pipeline.fuse_and_rerank("forest trail", [], lists, top_n=5, multipliers=mults)
+    assert boosted[0].provider_id == "X"

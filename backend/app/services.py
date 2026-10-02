@@ -8,6 +8,7 @@ import httpx
 from sqlmodel import Session, select
 
 from . import scene_splitter
+from .core import feedback as fb
 from .core import pipeline as matching
 from .cache import cache_get, cache_key, cache_set, fetch_thumbnail
 from .config import settings
@@ -159,7 +160,9 @@ async def manual_search(session: Session, scene: Scene, q: str, per_page: int = 
                 continue
             grouped.setdefault(p.name, []).extend(res)
     lists = [(q, [_to_asset(scene.id, n) for n in items]) for _p, items in grouped.items() if items]
-    ranked = matching.fuse_and_rerank(q + " " + scene.narration, [q], lists, session=session, top_n=12)
+    multipliers = fb.reweight_queries(session, scene.script_id)
+    ranked = matching.fuse_and_rerank(q + " " + scene.narration, [q], lists, session=session, top_n=12,
+                                      multipliers=multipliers or None)
     for i, a in enumerate(ranked):
         try:
             a.cached_thumbnail = await fetch_thumbnail(a.thumbnail_url, f"manual_{scene.id}_{i}")
