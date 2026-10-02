@@ -114,14 +114,14 @@ export function ProgressRail({
         <button
           onClick={() => setExpanded((v) => !v)}
           aria-label={expanded ? 'Collapse progress' : 'Expand progress'}
-          className="rounded-control px-1 text-tertiary hover:bg-elevated hover:text-primary"
+          className="shrink-0 rounded-control px-1 text-tertiary hover:bg-elevated hover:text-primary"
         >
           {expanded ? '▾' : '▸'}
         </button>
-        <span className="font-bold text-primary">{job.paused ? '⏸ Paused' : '⏳ Generating'}</span>
-        <span className="tabular-nums text-xs text-tertiary">{pct}%</span>
+        <span className="shrink-0 font-bold text-primary">{job.paused ? '⏸ Paused' : '⏳ Generating'}</span>
+        <span className="shrink-0 tabular-nums text-xs text-tertiary">{pct}%</span>
         {!expanded && (
-          <span className="truncate text-xs text-secondary" title={job.stage}>
+          <span className="min-w-0 flex-1 truncate text-xs text-secondary" title={job.stage}>
             {job.stage}
           </span>
         )}
@@ -129,7 +129,7 @@ export function ProgressRail({
         {job.paused ? (
           <button
             onClick={onResume}
-            className="rounded-control bg-success px-2.5 py-1 text-xs font-semibold text-primary hover:brightness-110"
+            className="shrink-0 rounded-control bg-success px-2.5 py-1 text-xs font-semibold text-primary hover:brightness-110"
           >
             ▶ Resume
           </button>
@@ -137,7 +137,7 @@ export function ProgressRail({
           <button
             onClick={onPause}
             title="Pause after the current scene finishes"
-            className="rounded-control bg-warn-soft px-2.5 py-1 text-xs font-semibold text-warn hover:bg-warn hover:text-primary"
+            className="shrink-0 rounded-control bg-warn-soft px-2.5 py-1 text-xs font-semibold text-warn hover:bg-warn hover:text-primary"
           >
             ⏸ Pause
           </button>
@@ -145,7 +145,7 @@ export function ProgressRail({
         <button
           onClick={onCancel}
           title="Stop now — scenes finished so far are kept"
-          className="rounded-control border border-danger/40 px-2.5 py-1 text-xs font-semibold text-danger hover:bg-danger-soft"
+          className="shrink-0 rounded-control border border-danger/40 px-2.5 py-1 text-xs font-semibold text-danger hover:bg-danger-soft"
         >
           ⏹ Cancel
         </button>

@@ -21,15 +21,15 @@ const TABS: Array<{ id: ViewMode; label: string }> = [
 export function CommandBar({ view, onView, dirty, canSave, onSave, onExport, onPalette }: Props): React.ReactElement {
   return (
     <header className="sticky top-0 z-10 flex items-center gap-3 border-b bg-surface px-4 py-2.5 shadow-card">
-      <h1 className="text-lg font-extrabold tracking-tight">
+      <h1 className="min-w-0 truncate text-lg font-extrabold tracking-tight">
         🎬 Script<span className="text-accent">2</span>Stock
       </h1>
-      <nav className="flex gap-1 rounded-card bg-elevated p-1" aria-label="Views">
+      <nav className="flex min-w-0 gap-1 overflow-x-auto rounded-card bg-elevated p-1" aria-label="Views">
         {TABS.map((t) => (
           <button
             key={t.id}
             onClick={() => onView(t.id)}
-            className={`relative rounded-control px-3 py-1 text-sm font-semibold ${
+            className={`relative shrink-0 rounded-control px-3 py-1 text-sm font-semibold ${
               view === t.id ? 'bg-surface text-primary shadow-card' : 'text-secondary hover:text-primary'
             }`}
           >
@@ -40,25 +40,25 @@ export function CommandBar({ view, onView, dirty, canSave, onSave, onExport, onP
           </button>
         ))}
       </nav>
-      <span className="flex-1" />
+      <span className="min-w-0 flex-1" />
       <button
         onClick={onPalette}
         title="Command palette"
-        className="hidden rounded-control border border-subtle px-2 py-1 text-xs text-tertiary hover:bg-inset sm:block"
+        className="hidden shrink-0 rounded-control border border-subtle px-2 py-1 text-xs text-tertiary hover:bg-inset sm:block"
       >
         ⌘K
       </button>
       <button
         onClick={onSave}
         disabled={!canSave}
-        className="rounded-control bg-accent px-3 py-1.5 text-sm font-semibold text-primary disabled:opacity-40 hover:bg-accent-hover"
+        className="shrink-0 rounded-control bg-accent px-3 py-1.5 text-sm font-semibold text-primary disabled:opacity-40 hover:bg-accent-hover"
       >
         Save{dirty ? ' ●' : ''}
       </button>
       <button
         onClick={onExport}
         disabled={!canSave}
-        className="rounded-control bg-accent px-3 py-1.5 text-sm font-semibold text-primary disabled:opacity-40"
+        className="shrink-0 rounded-control bg-elevated px-3 py-1.5 text-sm font-semibold text-primary ring-1 ring-border-subtle disabled:opacity-40 hover:bg-border-subtle"
       >
         Export
       </button>

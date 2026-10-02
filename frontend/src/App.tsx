@@ -514,14 +514,14 @@ export default function App(): React.ReactElement {
         </div>
       )}
       {error || notice ? (
-        <div className="pointer-events-none fixed right-4 top-16 z-50 flex w-80 flex-col gap-2">
+        <div className="pointer-events-none fixed right-4 top-16 z-50 flex w-80 max-w-[420px] flex-col gap-2">
           {error && <Toast kind="error" text={error} onDismiss={() => setError('')} />}
           {notice && <Toast kind="notice" text={notice} onDismiss={() => setNotice('')} />}
         </div>
       ) : null}
 
       <main className="mx-auto grid max-w-7xl gap-4 p-4 lg:grid-cols-[auto_1fr]">
-        <aside className="h-fit lg:sticky lg:top-16">
+        <aside className="h-fit lg:sticky lg:top-16 lg:h-[calc(100vh-4rem)] lg:overflow-y-auto lg:overscroll-contain">
           <ContextRail
             collapsed={railCollapsed}
             onToggleCollapse={toggleRail}

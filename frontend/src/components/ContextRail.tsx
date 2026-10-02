@@ -167,7 +167,9 @@ function BoardPane(p: Props): React.ReactElement {
               >
                 <span className={`h-2 w-2 shrink-0 rounded-pill ${DOT[st]}`} />
                 <span className="shrink-0 text-[11px] font-bold text-tertiary">{s.index + 1}</span>
-                <span className="min-w-0 flex-1 truncate text-xs text-primary">{s.narration}</span>
+                <span className="min-w-0 flex-1 text-xs text-primary">
+                  <span className="line-clamp-2">{s.narration}</span>
+                </span>
                 {picks > 0 && <span className="shrink-0 text-[11px] text-success">✓</span>}
               </button>
             </li>

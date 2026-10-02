@@ -15,7 +15,7 @@ interface Props {
 export function StatusBar({ counts, issues, lastSavedAt, generating, onNeedsPicks, onShowIssues }: Props): React.ReactElement {
   return (
     <footer className="fixed bottom-0 left-0 right-0 z-20 border-t border-subtle bg-surface/95 px-4 py-1.5 text-xs text-secondary backdrop-blur">
-      <div className="mx-auto flex max-w-7xl items-center gap-3">
+      <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-3">
         {generating && <span className="inline-block h-2 w-2 animate-pulse rounded-pill bg-accent" title="Generating" />}
         {counts ? (
           <>

@@ -1,4 +1,5 @@
 import React from 'react';
+import { FadeImg } from './FadeImg';
 import type { SavedStoryboardMeta, Storyboard } from '../types';
 
 interface Props {
@@ -37,7 +38,7 @@ export function BoardPreviewDrawer({ meta, preview, onClose, onOpen }: Props): R
             return (
               <div key={s.id} className="flex items-center gap-2 rounded-control bg-inset p-2">
                 {src ? (
-                  <img src={src} alt="" loading="lazy" className="h-10 w-16 shrink-0 rounded-control object-cover" />
+                  <FadeImg src={src} alt="" className="h-10 w-16 shrink-0 rounded-control object-cover" />
                 ) : (
                   <div className="h-10 w-16 shrink-0 rounded-control bg-elevated" />
                 )}

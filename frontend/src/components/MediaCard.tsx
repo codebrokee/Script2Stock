@@ -1,6 +1,7 @@
 import React from 'react';
 import type { MediaAsset } from '../types';
 import { aspectLabel, formatDuration } from '../lib/format';
+import { FadeImg } from './FadeImg';
 import { LicenseBadge } from './LicenseBadge';
 
 interface Props {
@@ -56,13 +57,12 @@ export function MediaCard({ asset, onUse, onReject, onSimilar, onUndo, loading, 
         type="button"
         onClick={() => onFocus?.(asset)}
         title="Inspect (opens details)"
-        className="relative block aspect-video w-full cursor-zoom-in bg-elevated text-left"
+        className="relative block aspect-video w-full cursor-zoom-in overflow-hidden rounded-md bg-bg-inset text-left"
       >
         {thumb ? (
-          <img
+          <FadeImg
             src={thumb}
             alt={asset.title}
-            loading="lazy"
             className={`h-full w-full object-cover ${status === 'rejected' ? 'grayscale' : ''}`}
           />
         ) : (
@@ -85,11 +85,11 @@ export function MediaCard({ asset, onUse, onReject, onSimilar, onUndo, loading, 
         </div>
       </button>
       <div className="space-y-1 p-2">
-        <div className="truncate text-xs font-medium" title={asset.title}>
+        <div className="line-clamp-2 text-xs font-medium" title={asset.title}>
           {asset.title || `${asset.provider} ${asset.provider_id}`}
         </div>
         <div className="flex items-center gap-1 text-[11px] text-secondary">
-          <span className="truncate">{asset.provider}</span>
+          <span className="min-w-0 flex-1 truncate">{asset.provider}</span>
           <span>·</span>
           <span>{asset.media_type}</span>
           {asset.width > 0 && (

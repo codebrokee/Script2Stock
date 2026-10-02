@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import type { MediaAsset } from '../types';
 import { aspectLabel, formatDuration } from '../lib/format';
+import { FadeImg } from './FadeImg';
 import { LicenseBadge } from './LicenseBadge';
 
 export function LicensePanel({ asset }: { asset: MediaAsset }): React.ReactElement {
@@ -23,7 +24,7 @@ export function LicensePanel({ asset }: { asset: MediaAsset }): React.ReactEleme
     <div className="rounded-control bg-inset p-3 text-xs">
       <div className="mb-1.5 flex items-center gap-2">
         <LicenseBadge license={asset.license} />
-        <span className="font-semibold text-primary">{asset.license || 'unknown'}</span>
+        <span className="prose-safe font-semibold text-primary">{asset.license || 'unknown'}</span>
       </div>
       <dl className="space-y-1 text-secondary">
         <div className="flex gap-2">
@@ -54,7 +55,7 @@ export function LicensePanel({ asset }: { asset: MediaAsset }): React.ReactEleme
         )}
       </div>
       {asset.license_url && (
-        <a href={asset.license_url} target="_blank" rel="noreferrer" className="mt-1 block truncate text-accent-text hover:underline">
+        <a href={asset.license_url} target="_blank" rel="noreferrer" className="prose-safe mt-1 block text-accent-text hover:underline">
           {asset.license_url}
         </a>
       )}
@@ -96,18 +97,18 @@ export function Inspector({ asset, sceneIndex, onClose, onUse, onReject, onSimil
           </button>
         </div>
         <div className="flex-1 space-y-3 overflow-y-auto p-4">
-          <div className="overflow-hidden rounded-card bg-elevated">
+          <div className="overflow-hidden rounded-card bg-bg-inset">
             {thumb ? (
-              <img src={thumb} alt={asset.title} className="max-h-64 w-full object-contain" />
+              <FadeImg src={thumb} alt={asset.title} className="max-h-64 w-full object-contain" />
             ) : (
               <div className="flex h-40 items-center justify-center text-xs text-tertiary">no preview</div>
             )}
           </div>
-          <div>
-            <h3 className="text-sm font-bold text-primary">{asset.title || `${asset.provider} ${asset.provider_id}`}</h3>
-            {asset.description && <p className="mt-1 text-xs leading-relaxed text-secondary">{asset.description}</p>}
+          <div className="min-w-0">
+            <h3 className="prose-safe text-sm font-bold text-primary">{asset.title || `${asset.provider} ${asset.provider_id}`}</h3>
+            {asset.description && <p className="prose-safe mt-1 text-xs leading-relaxed text-secondary">{asset.description}</p>}
           </div>
-          <dl className="grid grid-cols-2 gap-1.5 text-xs">
+          <dl className="grid grid-cols-2 gap-1.5 text-xs [grid-template-columns:repeat(2,minmax(0,1fr))]">
             <div className="rounded-control bg-inset px-2 py-1.5">
               <dt className="text-tertiary">Dimensions</dt>
               <dd className="font-semibold">{asset.width > 0 ? `${asset.width}×${asset.height}` : '—'}</dd>

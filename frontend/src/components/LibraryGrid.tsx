@@ -1,4 +1,5 @@
 import React from 'react';
+import { FadeImg } from './FadeImg';
 import type { SavedStoryboardMeta, Storyboard } from '../types';
 
 interface Props {
@@ -33,7 +34,7 @@ export function LibraryGrid({ saved, previews, onOpen }: Props): React.ReactElem
                   {thumbs.map((m) => {
                     const src = m.cached_thumbnail || m.thumbnail_url;
                     return src ? (
-                      <img key={m.id} src={src} alt="" loading="lazy" className="h-full w-full object-cover" />
+                      <FadeImg key={m.id} src={src} alt="" className="h-full w-full object-cover" />
                     ) : (
                       <div key={m.id} className="h-full w-full bg-elevated" />
                     );

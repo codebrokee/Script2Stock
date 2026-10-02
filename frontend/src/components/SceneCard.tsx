@@ -42,13 +42,13 @@ export function SceneCard({ scene, onStatus, onManualSearch, onSimilar, onRestor
       className={`scroll-mt-24 rounded-card border border-subtle bg-inset shadow-card ${compact ? 'p-2' : 'p-4'}`}
     >
       <header className="mb-2 flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <h3 className="text-sm font-bold text-primary">Scene {scene.index + 1}</h3>
-          <span className={`rounded-pill px-2 py-0.5 text-[11px] font-semibold ${PILL[status]}`}>
+        <div className="flex min-w-0 items-center gap-2">
+          <h3 className="shrink-0 text-sm font-bold text-primary">Scene {scene.index + 1}</h3>
+          <span className={`shrink-0 rounded-pill px-2 py-0.5 text-[11px] font-semibold ${PILL[status]}`}>
             {PILL_LABEL[status]}
           </span>
         </div>
-        <span className="text-[11px] text-tertiary">
+        <span className="shrink-0 text-[11px] text-tertiary">
           chars {scene.start_char}–{scene.end_char}
         </span>
       </header>
@@ -69,12 +69,12 @@ export function SceneCard({ scene, onStatus, onManualSearch, onSimilar, onRestor
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder="Manual search across all providers…"
-          className="flex-1 rounded-control border border-subtle px-3 py-1.5 text-sm focus:border-accent focus:outline-none"
+          className="min-w-0 flex-1 rounded-control border border-subtle bg-bg-inset px-3 py-1.5 text-sm text-primary placeholder:text-tertiary focus:border-accent focus:outline-none"
         />
         <button
           type="submit"
           disabled={searching || !q.trim()}
-          className="rounded-control bg-accent px-3 py-1.5 text-sm font-semibold text-primary disabled:opacity-40"
+          className="shrink-0 rounded-control bg-accent px-3 py-1.5 text-sm font-semibold text-primary disabled:opacity-40"
         >
           {searching ? '…' : 'Search'}
         </button>
