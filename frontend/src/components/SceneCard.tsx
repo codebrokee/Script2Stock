@@ -69,7 +69,7 @@ export function SceneCard({ scene, onStatus, onManualSearch, onSimilar, onRestor
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder="Manual search across all providers…"
-          className="min-w-0 flex-1 rounded-control border border-subtle bg-bg-inset px-3 py-1.5 text-sm text-primary placeholder:text-tertiary focus:border-accent focus:outline-none"
+          className="min-w-0 flex-1 rounded-control border border-subtle bg-inset px-3 py-1.5 text-sm text-primary placeholder:text-tertiary focus:border-accent focus:outline-none"
         />
         <button
           type="submit"

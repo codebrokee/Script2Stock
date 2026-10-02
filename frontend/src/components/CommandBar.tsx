@@ -58,7 +58,7 @@ export function CommandBar({ view, onView, dirty, canSave, onSave, onExport, onP
       <button
         onClick={onExport}
         disabled={!canSave}
-        className="shrink-0 rounded-control bg-elevated px-3 py-1.5 text-sm font-semibold text-primary ring-1 ring-border-subtle disabled:opacity-40 hover:bg-border-subtle"
+        className="shrink-0 rounded-control bg-elevated px-3 py-1.5 text-sm font-semibold text-primary ring-1 ring-subtle disabled:opacity-40 hover:bg-border-subtle"
       >
         Export
       </button>

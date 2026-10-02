@@ -9,7 +9,7 @@ export type SavedSort = 'newest' | 'oldest' | 'title';
 const DOT: Record<SceneStatus, string> = {
   done: 'bg-success',
   'needs-pick': 'bg-accent',
-  pending: 'bg-border-strong',
+  pending: 'bg-strong',
   error: 'bg-danger'
 };
 

@@ -97,7 +97,7 @@ export function Inspector({ asset, sceneIndex, onClose, onUse, onReject, onSimil
           </button>
         </div>
         <div className="flex-1 space-y-3 overflow-y-auto p-4">
-          <div className="overflow-hidden rounded-card bg-bg-inset">
+          <div className="overflow-hidden rounded-card bg-inset">
             {thumb ? (
               <FadeImg src={thumb} alt={asset.title} className="max-h-64 w-full object-contain" />
             ) : (

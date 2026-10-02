@@ -4,21 +4,17 @@ export default {
   theme: {
     extend: {
       colors: {
-        bg: {
-          base: '#0b0b0f',
-          surface: '#131318',
-          elevated: '#1c1c23',
-          inset: '#0f0f14'
-        },
-        border: {
-          subtle: '#23232c',
-          strong: '#2f2f3a'
-        },
-        text: {
-          primary: '#ececf1',
-          secondary: '#a1a1aa',
-          tertiary: '#71717a'
-        },
+        // Flat keys so utilities read bg-surface / text-primary / border-subtle.
+        // (Nested `bg: { surface }` would generate the doubled `bg-bg-surface`.)
+        base: '#0b0b0f',
+        surface: '#131318',
+        elevated: '#1c1c23',
+        inset: '#0f0f14',
+        subtle: '#23232c',
+        strong: '#2f2f3a',
+        primary: '#ececf1',
+        secondary: '#a1a1aa',
+        tertiary: '#71717a',
         accent: {
           DEFAULT: '#7c5cff',
           hover: '#6d4ce8',

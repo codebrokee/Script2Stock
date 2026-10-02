@@ -43,7 +43,7 @@ export function ProgressRail({
         <div className="mt-3">
           <button
             onClick={onDismiss}
-            className="rounded-control bg-surface px-3 py-1.5 text-xs font-semibold text-secondary ring-1 ring-border-subtle hover:bg-inset"
+            className="rounded-control bg-surface px-3 py-1.5 text-xs font-semibold text-secondary ring-1 ring-subtle hover:bg-inset"
           >
             Dismiss
           </button>
@@ -69,7 +69,7 @@ export function ProgressRail({
           </button>
           <button
             onClick={onDismiss}
-            className="rounded-control bg-surface px-3 py-1.5 text-xs font-semibold text-secondary ring-1 ring-border-subtle hover:bg-inset"
+            className="rounded-control bg-surface px-3 py-1.5 text-xs font-semibold text-secondary ring-1 ring-subtle hover:bg-inset"
           >
             Dismiss
           </button>
